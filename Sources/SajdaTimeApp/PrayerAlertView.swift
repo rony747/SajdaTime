@@ -14,11 +14,17 @@ struct PrayerAlertView: View {
     let settings: AppSettings
     let quote: ReminderQuote
     let snoozeMinutes: Int
+    /// Seconds before it closes itself. 0 keeps it up until dismissed.
+    let autoCloseAfter: TimeInterval
     let onDismiss: () -> Void
     let onSnooze: () -> Void
     let onMuteToday: () -> Void
 
     @State private var appeared = false
+    @State private var remaining: TimeInterval = 0
+
+    /// One publisher per view instance, rather than one built on every redraw.
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var backdropName: String { "alert-\(prayer.rawValue)" }
 
@@ -61,7 +67,13 @@ struct PrayerAlertView: View {
             .clipped()
             .ignoresSafeArea()
             .onAppear {
+                remaining = autoCloseAfter
                 withAnimation(.easeOut(duration: 0.45)) { appeared = true }
+            }
+            .onReceive(ticker) { _ in
+                guard autoCloseAfter > 0 else { return }
+                remaining = max(0, remaining - 1)
+                if remaining == 0 { onDismiss() }
             }
     }
 
@@ -304,7 +316,24 @@ struct PrayerAlertView: View {
                                 systemImage: "speaker.slash.fill",
                                 action: onMuteToday)
             }
+
+            if autoCloseAfter > 0 {
+                // Over the artwork the green ink alone was hard to read, so it
+                // gets the same light backing as the rest of the controls.
+                Text("Closes in \(countdownText)")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.greenInk.opacity(0.85))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(.white.opacity(0.72)))
+            }
         }
+    }
+
+    private var countdownText: String {
+        let total = Int(remaining.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 
     /// The primary action: wide, tall, filled, and bound to Return.

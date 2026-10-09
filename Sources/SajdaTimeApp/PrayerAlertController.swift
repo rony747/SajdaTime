@@ -52,6 +52,7 @@ final class PrayerAlertController: ObservableObject {
             settings: settings,
             quote: quote,
             snoozeMinutes: settings.snoozeMinutes,
+            autoCloseAfter: TimeInterval(settings.alertAutoCloseMinutes * 60),
             onDismiss: { [weak self] in self?.dismiss() },
             onSnooze: { [weak self] in
                 self?.dismiss()

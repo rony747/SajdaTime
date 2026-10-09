@@ -280,6 +280,13 @@ struct NotificationsSection: View {
             CardRow("Show a full-screen reminder", subtitle: "Covers the screen when a prayer begins, with a short hadith and a backdrop for that prayer.") {
                 GreenToggle(isOn: state.binding(\.fullScreenReminder))
             }
+            CardRow("Close the reminder automatically", subtitle: "It counts down and then closes itself; Dismiss and Escape always work too.") {
+                GreenPicker(
+                    options: [(0, "Never"), (5, "5 min"), (10, "10 min"), (15, "15 min"), (30, "30 min")],
+                    selection: state.binding(\.alertAutoCloseMinutes),
+                    width: 120
+                )
+            }
             CardRow("Snooze length") {
                 GreenPicker(
                     options: [(5, "5 min"), (10, "10 min"), (15, "15 min"), (20, "20 min")],

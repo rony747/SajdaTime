@@ -18,7 +18,6 @@ struct PanelView: View {
     let onOpenSettings: (SettingsSection) -> Void
 
     @State private var page: PanelPage = .main
-    @State private var selection: Prayer?
     @Environment(\.colorScheme) private var scheme
 
     private var zone: TimeZone { state.settings.displayTimeZone }
@@ -136,39 +135,37 @@ struct PanelView: View {
 
     private var nextPrayerBanner: some View {
         let subject = state.countdownSubject
-        return Button {
-            cycleSelection()
-        } label: {
-            VStack(spacing: 0) {
+        // Informational, not a control. It used to be a button with a chevron
+        // that advanced a highlight through the prayer rows below; the chevron
+        // implied navigation it did not do, and the highlight marked a row that
+        // was already visible. Which prayer the countdown refers to is a setting
+        // (Menubar → countdown target).
+        return VStack(spacing: 0) {
                 HStack(alignment: .center, spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(state.activeWindow == nil ? "Next Prayer" : "Current Prayer")
-                            .font(.system(size: 11, design: .rounded))
+                            .font(.system(size: 9.5, design: .rounded))
                             .foregroundStyle(.secondary)
                         Text(subject?.prayer.displayName ?? "—")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
                         if let subject {
                             Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Palette.greenInk)
                                 .monospacedDigit()
                         }
                     }
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 14)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
+                .padding(.top, 7)
+                .padding(.bottom, 4)
 
                 // The artwork has its own band so it can never sit under the
                 // text, and fills the full width so it reads as a background.
-                BannerArt()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 72)
-                    .clipped()
+                // No artwork strip. At the height this card now needs it showed
+                // only the top of the dome, cropped mid-curve, which read as a
+                // mistake rather than a design. The gradient below carries it.
             }
             .background(Palette.bannerGradient)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -176,21 +173,9 @@ struct PanelView: View {
             // The banner artwork and gradient are always pale, so the text is
             // pinned to the light scheme; otherwise it turned white on cream.
             .environment(\.colorScheme, .light)
-        }
-        .buttonStyle(.plain)
     }
 
     /// Step the focus through the day's prayers so each window can be inspected.
-    private func cycleSelection() {
-        let order = Prayer.allCases
-        guard let current = selection ?? state.activeWindow?.prayer ?? state.countdownSubject?.prayer,
-              let index = order.firstIndex(of: current) else {
-            selection = order.first
-            return
-        }
-        selection = order[(index + 1) % order.count]
-    }
-
     // MARK: - Prayer rows
 
     private var prayerList: some View {
@@ -238,12 +223,7 @@ struct PanelView: View {
         let time = state.today?.times[prayer]
         let window = state.today?.window(for: prayer, nextDay: state.tomorrow)
         let isActive = prayer == state.activeWindow?.prayer
-        let isFocused = prayer == (selection ?? state.activeWindow?.prayer ?? state.countdownSubject?.prayer)
-
-        return Button {
-            selection = (selection == prayer) ? nil : prayer
-        } label: {
-            HStack(spacing: 10) {
+        return HStack(spacing: 10) {
                 Image(systemName: prayer.symbolName)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(isActive ? Palette.green : Palette.tint(for: prayer))
@@ -280,14 +260,7 @@ struct PanelView: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(isActive ? Palette.green.opacity(0.16) : Color.primary.opacity(0.05))
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(isFocused && !isActive ? Palette.green.opacity(0.45) : .clear, lineWidth: 1)
-            )
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(windowSummary(for: prayer))
+            .help(windowSummary(for: prayer))
     }
 
     // MARK: - Footer

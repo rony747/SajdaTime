@@ -285,6 +285,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var fullScreenReminder: Bool
     /// How long the reminder's snooze defers it, in minutes.
     public var snoozeMinutes: Int
+    /// Minutes before the reminder closes itself. 0 leaves it up until dismissed.
+    public var alertAutoCloseMinutes: Int
     public var perPrayer: [String: PrayerReminderSettings]
 
     // Focus mode
@@ -330,6 +332,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         adhanAudioPath: String? = nil,
         fullScreenReminder: Bool = true,
         snoozeMinutes: Int = 10,
+        alertAutoCloseMinutes: Int = 15,
         perPrayer: [String: PrayerReminderSettings] = [:],
         focusModeEnabled: Bool = false,
         focusDurationMinutes: Int = 15,
@@ -370,6 +373,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.adhanAudioPath = adhanAudioPath
         self.fullScreenReminder = fullScreenReminder
         self.snoozeMinutes = snoozeMinutes
+        self.alertAutoCloseMinutes = alertAutoCloseMinutes
         self.perPrayer = perPrayer
         self.focusModeEnabled = focusModeEnabled
         self.focusDurationMinutes = focusDurationMinutes

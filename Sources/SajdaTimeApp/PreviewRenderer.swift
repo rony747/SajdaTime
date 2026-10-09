@@ -34,6 +34,7 @@ enum PreviewRenderer {
                         settings: state.settings,
                         quote: ReminderQuotes.all[index % ReminderQuotes.all.count],
                         snoozeMinutes: state.settings.snoozeMinutes,
+                        autoCloseAfter: TimeInterval(state.settings.alertAutoCloseMinutes * 60),
                         onDismiss: {}, onSnooze: {}, onMuteToday: {}
                     )
                     // Laid out at a real screen size; without this the renderer
@@ -53,6 +54,7 @@ enum PreviewRenderer {
                         settings: state.settings,
                         quote: ReminderQuotes.all[index % ReminderQuotes.all.count],
                         snoozeMinutes: state.settings.snoozeMinutes,
+                        autoCloseAfter: TimeInterval(state.settings.alertAutoCloseMinutes * 60),
                         onDismiss: {}, onSnooze: {}, onMuteToday: {}
                     )
                     .frame(width: 3254, height: 1072)

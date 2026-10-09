@@ -335,6 +335,9 @@ the merit of salah, and Dismiss / Snooze / Mute-Adhan-Today.
   invented.
 - **Text contrast is tuned per backdrop.** Dark text on a light wash; the night
   image needs a much stronger wash than the daylight ones.
+- **It closes itself after 15 minutes** by default, counting down under the
+  buttons, so a screen-filling window cannot be left up indefinitely. Settable to
+  Never, 5, 10, 15 or 30 minutes under Notifications.
 - **Dismiss is the primary action**: a filled 480x76 button on the emerald ink,
   centred, with Snooze and Mute Adhan Today as smaller secondary pills beneath
   it. It is also bound to Return, and Escape always dismisses.
@@ -429,6 +432,15 @@ solid ones and read as a mistake. Rather than force a wrong symbol, the set is
 outlined, which makes every stroke match and keeps Menubar's proper glyph.
 
 ## The menu bar panel
+
+The panel's prayer card is 59pt — about half its former height. It used to be a
+button carrying a chevron that advanced a highlight through the prayer rows
+below; the chevron implied navigation it did not perform, and the row it marked
+was already visible. Tapping a row did the same thing. Both are gone, along with
+the `selection` state behind them, since which prayer the countdown refers to is
+a setting (Menubar → countdown target). The artwork strip went too: at the height
+the card now needs it showed the top of the dome cropped mid-curve, which read as
+a mistake, so the gradient carries it instead.
 
 The row of glass pills that used to sit under the prayer list (Calendar,
 Settings, Reminders, and Qibla where a magnetometer exists) has been removed.
