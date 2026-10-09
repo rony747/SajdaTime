@@ -403,6 +403,57 @@ public enum SajdaCoreSelfTest {
         check("quotes.noImmediateRepeat", secondQuote.id != firstQuote.id,
               "repeated \(firstQuote.id)")
 
+        // 23. The reminder must survive a tick that arrives late.
+        //
+        // The rule used to require a tick inside the 60 seconds after a prayer
+        // began. App Nap suspends the timer of an idle menu bar app, so the
+        // minute passed and the reminder never appeared, while the notification —
+        // scheduled in advance by the system — still arrived. Five minutes late
+        // must now still announce.
+        let alertDay = times(lat: 23.8103, lng: 90.4125, tz: "Asia/Dhaka", date: "2026-06-15")
+        if let fajr = alertDay.times[.fajr] {
+            let late = PrayerAnnouncer.pending(
+                times: alertDay, now: fajr.addingTimeInterval(300),
+                announced: [], prefix: "alert-", grace: 1800
+            )
+            check("announcer.fiveMinutesLate",
+                  late?.prayer == .fajr && late?.shouldAnnounce == true,
+                  "got \(String(describing: late?.prayer)) announce=\(String(describing: late?.shouldAnnounce))")
+
+            let already = Set([PrayerAnnouncer.key(.fajr, fajr, prefix: "alert-")])
+            check("announcer.notRepeated",
+                  PrayerAnnouncer.pending(times: alertDay, now: fajr.addingTimeInterval(300),
+                                          announced: already, prefix: "alert-", grace: 1800) == nil)
+
+            let stale = PrayerAnnouncer.pending(
+                times: alertDay, now: fajr.addingTimeInterval(3600),
+                announced: [], prefix: "alert-", grace: 1800
+            )
+            check("announcer.tooLateStaysSilent",
+                  stale != nil && stale?.shouldAnnounce == false,
+                  "an hour-old prayer should be recorded, not shown")
+            check("announcer.tooLateStillRecords", !(stale?.keys.isEmpty ?? true),
+                  "the key must still be recorded or it will be reconsidered forever")
+
+            check("announcer.nothingBeforeTheFirst",
+                  PrayerAnnouncer.pending(times: alertDay, now: fajr.addingTimeInterval(-600),
+                                          announced: [], prefix: "alert-", grace: 1800) == nil)
+
+            // Waking after a long sleep: several prayers are past, only the most
+            // recent is announced, and all of them are marked so no burst follows.
+            if let isha = alertDay.times[.isha] {
+                let wake = PrayerAnnouncer.pending(
+                    times: alertDay, now: isha.addingTimeInterval(120),
+                    announced: [], prefix: "alert-", grace: 1800
+                )
+                check("announcer.picksMostRecent", wake?.prayer == .isha,
+                      "got \(String(describing: wake?.prayer))")
+                check("announcer.recordsEveryStartedPrayer",
+                      wake?.keys.count == Prayer.obligatory.count,
+                      "got \(wake?.keys.count ?? 0) keys, expected \(Prayer.obligatory.count)")
+            }
+        }
+
         return SelfTestReport(checksRun: checks, failures: failures)
     }
 }

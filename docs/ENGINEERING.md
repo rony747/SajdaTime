@@ -373,6 +373,40 @@ reminder fires through the same code as a normal prayer.
 With `SAJDA_DEBUG=1` the app logs `reminder shown for <prayer>, quote=<id>,
 backdrop=<name>` when it appears.
 
+### Why the reminder could miss its prayer entirely
+
+The reminder was reported as never appearing — only the ordinary notification
+arrived. Two separate things had to be true for that.
+
+**The notification is scheduled in advance; the reminder was not.** Notifications
+use `UNCalendarNotificationTrigger`, so the *system* delivers them on time even
+when the app is suspended. The reminder depended on a one-second `Timer`, and
+nothing prevented App Nap. An idle menu bar app with no open window is exactly
+what App Nap targets, so the timer stopped firing and `tick()` was not called
+during the prayer's minute.
+
+**The window was only sixty seconds wide.** Even when the timer did run, the
+reminder was shown only if a tick happened to land within 60 seconds of the start
+time. A late tick, or a Mac that had been asleep, fell straight through.
+
+Three changes:
+
+1. `beginActivity(options: .userInitiatedAllowingIdleSystemSleep)` is held for the
+   process lifetime, which stops App Nap without keeping the Mac awake.
+2. The decision moved into `PrayerAnnouncer` in the library, where the self-test
+   can reach it. It looks at every prayer that has already started, picks the most
+   recent one that has not been announced, and records *all* of them so a wake
+   after a long sleep cannot produce a burst of reminders for prayers long past.
+3. A prayer is still announced up to **30 minutes** late, so a suspended timer or
+   a brief sleep no longer loses it. Anything older is recorded silently.
+
+The adhan playback used the same one-minute window and shared the same defect, so
+it now goes through the same rule.
+
+Covered by `announcer.*` in the self-test. Reverting the grace period to 60
+seconds makes `announcer.fiveMinutesLate` fail, which is how the test was checked
+rather than assumed.
+
 ### Sourcing note
 
 The ahadith and their references come from

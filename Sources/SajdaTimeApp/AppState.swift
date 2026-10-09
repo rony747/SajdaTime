@@ -45,6 +45,13 @@ final class AppState: ObservableObject {
     /// never drift from the bundle identifier, which a previous rename caused.
     static let preferencesDomain = "app.local.sajdatime"
     private var ticker: Timer?
+    /// Held for the process lifetime. Without it macOS App Naps the app when it
+    /// is idle — which a menu bar app with no window always is — and the
+    /// one-second timer stops firing, so the reminder misses the prayer's minute
+    /// altogether while the system-scheduled notification still arrives. That is
+    /// exactly the bug this fixes. `.userInitiatedAllowingIdleSystemSleep` stops
+    /// App Nap without keeping the Mac awake.
+    private var activityToken: NSObjectProtocol?
     private var refreshTask: Task<Void, Never>?
     private var lastLoadedDay: Date?
     private var playedAdhanKeys: Set<String> = []
@@ -110,6 +117,20 @@ final class AppState: ObservableObject {
     // MARK: - Clock
 
     private func startTicking() {
+        activityToken = ProcessInfo.processInfo.beginActivity(
+            options: .userInitiatedAllowingIdleSystemSleep,
+            reason: "Prayer times must fire at their exact minute"
+        )
+        // A wake is the one moment the timer is guaranteed to have been stopped,
+        // so re-evaluate immediately rather than waiting for the next tick.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.tick() }
+        }
+
         let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
@@ -147,30 +168,40 @@ final class AppState: ObservableObject {
         guard settings.notificationsEnabled, let today else { return }
         // Muted for the rest of the day from the reminder's own button.
         if let muted = adhanMutedDay, Calendar.current.isDate(muted, inSameDayAs: now) { return }
-        for prayer in Prayer.obligatory {
-            guard let prayerTime = today.times[prayer] else { continue }
-            // Only fire on the minute the prayer starts, so a missed tick does
-            // not replay every adhan for the rest of the day.
-            guard now >= prayerTime, now.timeIntervalSince(prayerTime) < 60 else { continue }
+        // Same catch-up rule as the reminder: a prayer whose time passed while
+        // the timer was suspended should still play, but not one from hours ago.
+        guard let decision = PrayerAnnouncer.pending(
+            times: today,
+            now: now,
+            announced: playedAdhanKeys,
+            grace: Self.alertGrace
+        ) else { return }
 
-            let key = "\(prayer.rawValue)-\(Int(prayerTime.timeIntervalSince1970))"
-            guard !playedAdhanKeys.contains(key) else { continue }
-            playedAdhanKeys.insert(key)
+        playedAdhanKeys.formUnion(decision.keys)
+        guard decision.shouldAnnounce else { return }
 
-            let reminder = settings.reminder(for: prayer)
-            guard reminder.playAdhan || settings.playFullAdhan else { continue }
+        let reminder = settings.reminder(for: decision.prayer)
+        guard reminder.playAdhan || settings.playFullAdhan else { return }
 
-            if let path = settings.adhanAudioPath, FileManager.default.fileExists(atPath: path) {
-                notifications.playAudioFile(at: path)
-            } else {
-                notifications.playSound(named: reminder.soundName ?? settings.defaultSoundName)
-            }
+        if let path = settings.adhanAudioPath, FileManager.default.fileExists(atPath: path) {
+            notifications.playAudioFile(at: path)
+        } else {
+            notifications.playSound(named: reminder.soundName ?? settings.defaultSoundName)
         }
         // Keep the set from growing without bound across days.
         if playedAdhanKeys.count > 64 {
             playedAdhanKeys.removeAll()
         }
     }
+
+    /// How late a reminder may still be shown.
+    ///
+    /// It used to be one minute, evaluated only if a tick happened to land inside
+    /// it. A sleeping Mac, or simply App Nap suspending the timer, meant the
+    /// minute went by and the reminder never appeared. Everything since the last
+    /// tick is now caught up instead, with a limit so a Mac that wakes after a
+    /// long sleep does not announce a prayer from hours ago.
+    private static let alertGrace: TimeInterval = 30 * 60
 
     /// Show the full-screen reminder when a prayer begins, or when a snooze
     /// comes due.
@@ -184,16 +215,20 @@ final class AppState: ObservableObject {
         }
 
         guard let today else { return }
-        for prayer in Prayer.obligatory {
-            guard let prayerTime = today.times[prayer] else { continue }
-            // Only on the minute it starts, so a missed tick cannot replay it.
-            guard now >= prayerTime, now.timeIntervalSince(prayerTime) < 60 else { continue }
 
-            let key = "alert-\(prayer.rawValue)-\(Int(prayerTime.timeIntervalSince1970))"
-            guard !playedAdhanKeys.contains(key) else { continue }
-            playedAdhanKeys.insert(key)
-            presentAlert(for: prayer)
-        }
+        guard let decision = PrayerAnnouncer.pending(
+            times: today,
+            now: now,
+            announced: playedAdhanKeys,
+            prefix: "alert-",
+            grace: Self.alertGrace
+        ) else { return }
+
+        // Record every prayer that has started, not just the one being shown, so
+        // a wake after a long sleep does not produce a burst.
+        playedAdhanKeys.formUnion(decision.keys)
+        guard decision.shouldAnnounce else { return }
+        presentAlert(for: decision.prayer)
     }
 
     private func presentAlert(for prayer: Prayer) {
