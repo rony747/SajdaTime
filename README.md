@@ -18,18 +18,78 @@ location, a countdown in the menu bar, and per-prayer reminders you control.
 
 ## Building
 
+From a clean checkout — no cached state, no generated files committed:
+
 ```bash
-./build.sh            # release build
-./build.sh debug      # debug build
-open "dist/Sajda Time.app"
+./build.sh                 # release, the default
+./build.sh debug           # -Onone -g
 ```
 
-Requires Xcode (tested with Xcode 27 / Swift 6.4) and **macOS 26 or later**,
-because the interface is built on Liquid Glass (`.glassEffect`, `GlassEffectContainer`).
+It prints its progress and finishes with the two artefacts:
+
+```
+==> Building SajdaCore (release)
+==> Building sajdactl
+==> Building SajdaTime app binary
+==> Assembling app bundle
+    version: 2.8.2 (build 20)
+    icon: AppIcon.icns generated
+    signed (ad-hoc)
+
+Done.
+  CLI : .build/bin/sajdactl
+  App : dist/Sajda Time.app
+```
+
+A clean release build takes about 25 seconds on an M-series Mac. To install it:
+
+```bash
+rm -rf "/Applications/Sajda Time.app"
+cp -R "dist/Sajda Time.app" /Applications/
+open "/Applications/Sajda Time.app"
+```
+
+To hand it to someone else, archive the bundle so the signature and resource
+forks survive:
+
+```bash
+ditto -c -k --sequesterRsrc --keepParent "dist/Sajda Time.app" SajdaTime.zip
+```
+
+### What the script actually does
+
+1. Compiles `Sources/SajdaCore/*.swift` into a static library, emitting a
+   `.swiftmodule` alongside it.
+2. Links `Sources/SajdaTimeCtl/*.swift` against it to produce the `sajdactl`
+   verification CLI.
+3. Links `Sources/SajdaTimeApp/*.swift` against it to produce the app binary.
+4. Assembles the bundle by hand: `Contents/MacOS/SajdaTime`, `Info.plist`,
+   `PkgInfo`, and the PNG/JPG artwork into `Contents/Resources`.
+5. Generates `AppIcon.icns` from `Resources/Assets/appicon.png` with `sips` and
+   `iconutil`, so the icon has one source of truth rather than a committed binary.
+6. Stamps `CFBundleShortVersionString` from `./VERSION` and `CFBundleVersion`
+   from the commit count, and warns if `HEAD` carries a tag that disagrees.
+7. Ad-hoc signs the bundle with `codesign --force --sign -`.
+
+### Requirements
+
+- **macOS 26 or later.** The target is `arm64-apple-macosx26.0`, and the
+  interface is built on Liquid Glass (`.glassEffect`, `GlassEffectContainer`).
+- Xcode command line tools for `swiftc`, `xcrun`, `sips` and `iconutil`.
+  Tested with Xcode 27 / Swift 6.4.
+- No package dependencies, so nothing is fetched at build time.
 
 The result is an ad-hoc signed `.app` that runs locally. It is **not** signed
 with a Developer ID and **not** notarised, so it cannot be distributed to other
 machines as-is; that needs your own signing certificate.
+
+### Version
+
+`./VERSION` is the single source of truth. The script stamps it into the bundle
+at build time, so the app cannot report a version that differs from the release —
+which it had: About reported `1.0.0` through several tagged releases because the
+plist was being bumped by hand and had been missed. `Resources/Info.plist` now
+holds a placeholder on purpose.
 
 ### Why `build.sh` instead of `swift build`
 

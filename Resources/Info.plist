@@ -19,25 +19,24 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>0.0.0-development</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.lifestyle</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>26.0</string>
-	<!-- Menu bar only: no Dock icon, no app switcher entry. -->
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Sajda Time</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Sajda Time uses your location to work out prayer times for where you are. Your location is only used to compute prayer times and is never sent anywhere except to the prayer time service.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>Sajda Time uses your location to work out prayer times for where you are.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sajda Time uses your location to work out prayer times for where you are. Your location is only used to compute prayer times and is never sent anywhere except to the prayer time service.</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.lifestyle</string>
 </dict>
 </plist>

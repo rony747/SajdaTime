@@ -65,6 +65,21 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN/SajdaTime" "$APP/Contents/MacOS/SajdaTime"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
+
+# The version lives in ./VERSION and is stamped in here, so the bundle cannot
+# drift from the release the way it did: About was reporting 1.0.0 through
+# several tagged releases because the plist was never bumped by hand.
+VERSION="$(cat VERSION 2>/dev/null || echo 0.0.0)"
+BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist" >/dev/null
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist" >/dev/null
+echo "    version: $VERSION (build $BUILD_NUMBER)"
+
+# A tag that disagrees with VERSION is the exact drift this is meant to stop.
+HEAD_TAG="$(git describe --tags --exact-match HEAD 2>/dev/null || true)"
+if [ -n "$HEAD_TAG" ] && [ "${HEAD_TAG#v}" != "$VERSION" ]; then
+    echo "    WARNING: HEAD is tagged $HEAD_TAG but VERSION says $VERSION"
+fi
 # In-app artwork, loaded by name from Contents/Resources.
 for asset in appicon banner logo logo-dark; do
     if [ -f "Resources/Assets/$asset.png" ]; then
