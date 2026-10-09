@@ -128,9 +128,10 @@ struct PrayerAlertView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Sajda Time")
                     .font(.system(size: 27, weight: .bold, design: .rounded))
+                    .tracking(-0.4)
                 Text("Your Daily Connection")
                     .font(.system(size: 14, design: .rounded))
-                    .foregroundStyle(Palette.greenDeep.opacity(0.75))
+                    .foregroundStyle(Palette.greenInk.opacity(0.75))
             }
             Spacer()
             HStack(spacing: 7) {
@@ -138,13 +139,13 @@ struct PrayerAlertView: View {
                 Text("Prayer Reminder")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
             }
-            .foregroundStyle(Palette.greenDeep)
+            .foregroundStyle(Palette.greenInk)
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
             .background(Capsule().fill(.white.opacity(0.8)))
             .overlay(Capsule().strokeBorder(.white.opacity(0.95)))
         }
-        .foregroundStyle(Palette.greenDeep)
+        .foregroundStyle(Palette.greenInk)
         // The header lands on bright cloud in several of the backdrops.
         .shadow(color: .white.opacity(0.95), radius: 12, y: 1)
     }
@@ -154,17 +155,19 @@ struct PrayerAlertView: View {
     private var titleBlock: some View {
         VStack(spacing: 8) {
             Text("It's time for \(prayer.displayName)")
-                .font(.system(size: 76, weight: .bold, design: .serif))
-                .tracking(-1.2)
-                .foregroundStyle(Palette.greenDeep)
+                // New York, the system serif — no third-party faces.
+                .font(.system(size: 78, weight: .bold, design: .serif))
+                .tracking(-1.6)
+                .foregroundStyle(Palette.inkGradient)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 // Lifts the heading off a busy photograph.
                 .shadow(color: .white.opacity(0.9), radius: 20, y: 2)
 
             Text("Pause for prayer and reconnect.")
-                .font(.system(size: 26, design: .serif))
-                .foregroundStyle(Palette.greenDeep.opacity(0.85))
+                .font(.system(size: 27, weight: .regular, design: .serif))
+                .tracking(0.2)
+                .foregroundStyle(Palette.greenInk.opacity(0.72))
         }
         .multilineTextAlignment(.center)
     }
@@ -177,7 +180,7 @@ struct PrayerAlertView: View {
                 .font(.system(size: 58, weight: .bold, design: .rounded))
                 .monospacedDigit()
         }
-        .foregroundStyle(Palette.greenDeep)
+        .foregroundStyle(Palette.greenInk)
         .padding(.horizontal, 40)
         .padding(.vertical, 12)
         .background(
@@ -196,8 +199,9 @@ struct PrayerAlertView: View {
             Image(systemName: "mappin.and.ellipse").font(.system(size: 14))
             Text(metaText)
                 .font(.system(size: 16, weight: .medium, design: .rounded))
+                .tracking(0.3)
         }
-        .foregroundStyle(Palette.greenDeep.opacity(0.9))
+        .foregroundStyle(Palette.greenInk.opacity(0.9))
     }
 
     private var metaText: String {
@@ -212,7 +216,7 @@ struct PrayerAlertView: View {
         VStack(spacing: 12) {
             Image(systemName: quote.kind == .quran ? "book.closed.fill" : "text.book.closed.fill")
                 .font(.system(size: 22))
-                .foregroundStyle(Palette.greenDeep)
+                .foregroundStyle(Palette.greenInk)
                 .frame(width: 50, height: 50)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -224,17 +228,19 @@ struct PrayerAlertView: View {
                 )
 
             Text(quote.displayText)
-                .font(.system(size: 25, design: .serif))
-                .lineSpacing(8)
-                .foregroundStyle(Palette.greenDeep)
+                .font(.system(size: 27, weight: .regular, design: .serif))
+                .tracking(0.1)
+                .lineSpacing(11)
+                .foregroundStyle(Palette.greenInk)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 12) {
-                Rectangle().fill(Palette.greenDeep.opacity(0.22)).frame(width: 50, height: 1)
+                Rectangle().fill(Palette.greenInk.opacity(0.22)).frame(width: 50, height: 1)
                 Text(quote.kind == .quran ? quote.reference : "— \(quote.reference)")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(Palette.greenDeep.opacity(0.7))
-                Rectangle().fill(Palette.greenDeep.opacity(0.22)).frame(width: 50, height: 1)
+                    .tracking(0.6)
+                    .foregroundStyle(Palette.greenInk.opacity(0.68))
+                Rectangle().fill(Palette.greenInk.opacity(0.22)).frame(width: 50, height: 1)
             }
         }
         .padding(.horizontal, 36)
@@ -303,13 +309,13 @@ struct PrayerAlertView: View {
     private var muteRow: some View {
         Button(action: onMuteToday) {
             HStack(spacing: 8) {
-                Rectangle().fill(Palette.greenDeep.opacity(0.3)).frame(width: 44, height: 1)
+                Rectangle().fill(Palette.greenInk.opacity(0.3)).frame(width: 44, height: 1)
                 Image(systemName: "speaker.slash.fill").font(.system(size: 12))
                 Text("Mute Adhan Today")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                Rectangle().fill(Palette.greenDeep.opacity(0.3)).frame(width: 44, height: 1)
+                Rectangle().fill(Palette.greenInk.opacity(0.3)).frame(width: 44, height: 1)
             }
-            .foregroundStyle(Palette.greenDeep.opacity(0.85))
+            .foregroundStyle(Palette.greenInk.opacity(0.85))
         }
         .buttonStyle(.plain)
     }
@@ -320,7 +326,7 @@ struct PrayerAlertView: View {
                 Image(systemName: systemImage).font(.system(size: 14, weight: .bold))
                 Text(title).font(.system(size: 17, weight: .semibold, design: .rounded))
             }
-            .foregroundStyle(Palette.greenDeep)
+            .foregroundStyle(Palette.greenInk)
             .frame(width: 250)
             .padding(.vertical, 15)
             .background(

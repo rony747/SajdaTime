@@ -6,8 +6,25 @@ import SajdaCore
 enum Palette {
     /// Primary green used for selection, toggles and the app mark.
     static let green = Color(red: 0.16, green: 0.62, blue: 0.34)
+    /// Mid-green, kept for the app mark's gradient and for shadows.
     static let greenDeep = Color(red: 0.09, green: 0.45, blue: 0.24)
     static let greenSoft = Color(red: 0.87, green: 0.96, blue: 0.90)
+
+    /// Display ink: a deep emerald, dark enough to read as near-black at a
+    /// glance while still clearly green. Used for every piece of text that sits
+    /// on the pale banner or the reminder, so it stays consistent across both.
+    static let greenInk = Color(red: 0.043, green: 0.243, blue: 0.176)
+    /// One step deeper, for the foot of the display gradient.
+    static let greenInkDeep = Color(red: 0.024, green: 0.176, blue: 0.125)
+
+    /// Vertical gradient for large display type; a flat fill looks thin at
+    /// heading sizes.
+    static var inkGradient: LinearGradient {
+        LinearGradient(
+            colors: [greenInk, greenInkDeep],
+            startPoint: .top, endPoint: .bottom
+        )
+    }
 
     /// Warm tone for the sun-related prayers.
     static let amber = Color(red: 0.97, green: 0.65, blue: 0.20)
@@ -32,7 +49,7 @@ enum Palette {
     static func accentText(_ scheme: ColorScheme) -> Color {
         scheme == .dark
             ? Color(red: 0.49, green: 0.88, blue: 0.63)
-            : greenDeep
+            : greenInk
     }
 
     /// Fill for a selected row or pill.

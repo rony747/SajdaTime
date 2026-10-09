@@ -130,7 +130,7 @@ struct PanelView: View {
                         if let subject {
                             Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Palette.greenDeep)
+                                .foregroundStyle(Palette.greenInk)
                                 .monospacedDigit()
                         }
                     }

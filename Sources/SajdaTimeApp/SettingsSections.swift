@@ -100,7 +100,7 @@ struct SummaryCard: View {
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                         Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Palette.greenDeep)
+                            .foregroundStyle(Palette.greenInk)
                             .monospacedDigit()
                     }
                 }
@@ -625,12 +625,12 @@ struct AppearanceSection: View {
                     Text(ClockFormat.twelveHour.example)
                         .font(.system(size: 13, weight: state.settings.clockFormat == .twelveHour ? .semibold : .regular,
                                       design: .rounded))
-                        .foregroundStyle(state.settings.clockFormat == .twelveHour ? Palette.greenDeep : .secondary)
+                        .foregroundStyle(state.settings.clockFormat == .twelveHour ? Palette.greenInk : .secondary)
                         .monospacedDigit()
                     Text(ClockFormat.twentyFourHour.example)
                         .font(.system(size: 13, weight: state.settings.clockFormat == .twentyFourHour ? .semibold : .regular,
                                       design: .rounded))
-                        .foregroundStyle(state.settings.clockFormat == .twentyFourHour ? Palette.greenDeep : .secondary)
+                        .foregroundStyle(state.settings.clockFormat == .twentyFourHour ? Palette.greenInk : .secondary)
                         .monospacedDigit()
                 }
             }

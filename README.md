@@ -309,6 +309,32 @@ one of the two pages suggested. [sunnah.com](https://sunnah.com/bukhari/8) could
 not be used: it answers automated requests with HTTP 403 behind a Cloudflare
 challenge, so nothing here was taken from it or checked against it.
 
+## Typography and ink
+
+Everything is set in the macOS system faces — no bundled or third-party fonts.
+That gives three designs to work with, and each has one job:
+
+| design | face | used for |
+| --- | --- | --- |
+| `.serif` | New York | the prayer name, the subtitle and the hadith |
+| `.rounded` | SF Rounded | the time, the metadata line, labels and buttons |
+| `.default` | SF Pro | body text elsewhere in the app |
+
+Within those, the display type is tuned rather than left at defaults: New York
+Bold at 78pt with −1.6 tracking for the prayer name, the hadith at 27pt with 11pt
+line spacing, and small positive tracking on the reference and metadata lines so
+they hold up at small sizes.
+
+Display text uses `Palette.greenInk`, a deep emerald (`#0B3E2D`), rather than the
+mid-green used for the app mark. It reads as near-black at a glance while staying
+clearly green, and it is dark enough to sit on the pale banner and on the
+reminder's washed backdrops without losing contrast. Large headings take
+`inkGradient`, a short vertical gradient, since a flat fill looks thin at
+heading sizes.
+
+`greenDeep` is kept for the app mark's gradient and for shadows, so darkening the
+text did not dull the mark.
+
 ## Clock format
 
 `Appearance › Clock` switches every time in the app between 12-hour
