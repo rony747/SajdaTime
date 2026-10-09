@@ -280,6 +280,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var countdownTarget: CountdownTarget
     public var showIshraq: Bool
     public var showHijriDate: Bool
+    /// 12-hour ("5:24 PM") or 24-hour ("17:24") clocks.
+    public var clockFormat: ClockFormat
     public var language: AppLanguage
 
     // Notifications
@@ -325,6 +327,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         countdownTarget: CountdownTarget = .currentWindowEnd,
         showIshraq: Bool = false,
         showHijriDate: Bool = true,
+        clockFormat: ClockFormat = .twelveHour,
         language: AppLanguage = .system,
         notificationsEnabled: Bool = true,
         defaultSoundName: String = "Soft chime",
@@ -362,6 +365,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.countdownTarget = countdownTarget
         self.showIshraq = showIshraq
         self.showHijriDate = showHijriDate
+        self.clockFormat = clockFormat
         self.language = language
         self.notificationsEnabled = notificationsEnabled
         self.defaultSoundName = defaultSoundName
@@ -445,6 +449,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
         }
         offsets.append(ReminderOffset(anchor: .at, minutes: 0))
         return offsets
+    }
+
+    /// Format a clock time using the user's 12/24-hour preference.
+    public func clock(_ date: Date, withSeconds: Bool = false) -> String {
+        TimeFormatting.clock(date, timeZone: displayTimeZone, format: clockFormat, withSeconds: withSeconds)
     }
 
     public var calculationOptions: PrayerCalculator.Options {

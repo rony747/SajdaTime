@@ -91,17 +91,26 @@ Tests/PrayerCoreTests/ XCTest wrapper around the shared self-test
 
 ## Design
 
-A distinct identity rather than a re-skin, built on Liquid Glass:
+Built on Liquid Glass, in green with a warm amber for the sun prayers:
 
-- **Palette** — indigo and violet with a warm amber for whichever prayer is
-  currently in its time, so the active state is a colour it earns rather than a
-  permanent accent.
-- **Panel** — a progress ring showing what is left of the open window, a row of
-  glass chips for the day, and circular glass buttons. A ring makes the remaining
-  time legible at a glance and reinforces that a prayer is a window with a length.
-- **Settings** — a `NavigationSplitView` source list with native
-  `Form`/`Section`/`LabeledContent` content, not a horizontal tab strip and
-  hand-rolled rows.
+- **App mark** — a mosque drawn as a `Shape`, so one glyph serves the sidebar,
+  the panel header and the menu bar at any size.
+- **Panel** — app mark and place header with a live clock, a gradient
+  next-prayer banner over a drawn skyline, one row per prayer (the open window
+  tinted green with a live countdown pill), four action tiles, and a footer
+  showing the calculation method and madhab.
+- **Qibla and Calendar** are real pages, not decoration. The qibla page shows a
+  bearing from true north — Macs have no magnetometer, so a needle driven by
+  device heading would be fiction — and the calendar page shows the month with
+  Umm al-Qura day numbers alongside the Gregorian ones.
+- **Settings** — sidebar with the app identity, and cards with icon headers.
+
+## Clock format
+
+`Appearance › Clock` switches every time in the app between 12-hour
+("5:24 PM") and 24-hour ("17:24"). All formatting goes through
+`TimeFormatting` in the core module, so the panel, the settings preview and the
+menu bar cannot drift apart, and the preference is asserted in the self-test.
 
 ## Design decisions worth knowing
 

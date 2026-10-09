@@ -26,6 +26,8 @@ final class AppState: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var lastError: String?
     @Published private(set) var lastUpdated: Date?
+    /// Section the settings window should show. Set before opening the window.
+    @Published var requestedSettingsSection: SettingsSection = .general
 
     let notifications = NotificationService()
     let focusMode = FocusModeController()

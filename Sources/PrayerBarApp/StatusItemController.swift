@@ -13,13 +13,13 @@ import PrayerCore
 final class StatusItemController: NSObject {
 
     private let state: AppState
-    private let onOpenSettings: () -> Void
+    private let onOpenSettings: (SettingsSection) -> Void
     private let statusItem: NSStatusItem
     private let popover = NSPopover()
     private var cancellables: Set<AnyCancellable> = []
     private var debugLogURL: URL?
 
-    init(state: AppState, onOpenSettings: @escaping () -> Void) {
+    init(state: AppState, onOpenSettings: @escaping (SettingsSection) -> Void) {
         self.state = state
         self.onOpenSettings = onOpenSettings
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

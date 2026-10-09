@@ -1,155 +1,318 @@
 import SwiftUI
+import PrayerCore
 
-/// Visual identity: a "night sky" palette with Liquid Glass surfaces.
-///
-/// Deliberately unlike the app this was modelled on: no flat green accent, no
-/// grey grouped cards, no top tab strip. Warm amber marks the prayer that is
-/// currently in its time; indigo and violet carry everything else.
+// MARK: - Palette
+
 enum Palette {
-    static let indigo = Color(red: 0.33, green: 0.34, blue: 0.88)
-    static let violet = Color(red: 0.55, green: 0.33, blue: 0.93)
-    static let amber = Color(red: 1.00, green: 0.70, blue: 0.22)
-    static let mint = Color(red: 0.29, green: 0.86, blue: 0.76)
+    /// Primary green used for selection, toggles and the app mark.
+    static let green = Color(red: 0.16, green: 0.62, blue: 0.34)
+    static let greenDeep = Color(red: 0.09, green: 0.45, blue: 0.24)
+    static let greenSoft = Color(red: 0.87, green: 0.96, blue: 0.90)
 
-    /// Accent used for selected controls.
-    static let accent = indigo
+    /// Warm tone for the sun-related prayers.
+    static let amber = Color(red: 0.97, green: 0.65, blue: 0.20)
+    /// Cool tone for the night prayer.
+    static let night = Color(red: 0.28, green: 0.33, blue: 0.47)
 
-    /// Gradient for progress and emphasis.
-    static let aurora = LinearGradient(
-        colors: [mint, indigo, violet],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    static let cardCorner: CGFloat = 16
 
-    /// Gradient used while a prayer's window is open.
-    static let windowGradient = AngularGradient(
-        colors: [amber, Color(red: 1.0, green: 0.45, blue: 0.35), amber],
-        center: .center,
-        startAngle: .degrees(-90),
-        endAngle: .degrees(270)
-    )
-}
-
-// MARK: - Glass surfaces
-
-/// A rounded glass panel. The building block for every grouped surface.
-struct GlassPanel<Content: View>: View {
-    var cornerRadius: CGFloat = 22
-    var tint: Color?
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        content
-            .padding(14)
-            .glassEffect(glass, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    /// Icon tint for a prayer: sun prayers are warm, Isha is cool. The row that
+    /// is currently in its time overrides this with green.
+    static func tint(for prayer: Prayer) -> Color {
+        switch prayer {
+        case .isha: return night
+        default: return amber
+        }
     }
 
-    private var glass: Glass {
-        if let tint { return .regular.tint(tint) }
-        return .regular
+    static var markGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(red: 0.30, green: 0.78, blue: 0.47), greenDeep],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    static var bannerGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 0.90, green: 0.97, blue: 0.92),
+                Color(red: 0.98, green: 0.95, blue: 0.86),
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
     }
 }
 
-/// A small glass pill, used for the day's prayer chips.
-struct GlassPill<Content: View>: View {
-    var isActive: Bool = false
-    @ViewBuilder var content: Content
+// MARK: - App mark
 
-    var body: some View {
-        content
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .glassEffect(
-                isActive
-                    ? .regular.tint(Palette.amber.opacity(0.55)).interactive()
-                    : .regular.interactive(),
-                in: Capsule()
+/// The mosque glyph used for the app mark, drawn rather than imported so it
+/// scales cleanly at every size (menu bar, sidebar, panel header).
+struct MosqueShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        func x(_ f: CGFloat) -> CGFloat { rect.minX + f * w }
+        func y(_ f: CGFloat) -> CGFloat { rect.minY + f * h }
+        var path = Path()
+
+        // Base block.
+        path.addRoundedRect(
+            in: CGRect(x: x(0.24), y: y(0.52), width: w * 0.52, height: h * 0.36),
+            cornerSize: CGSize(width: w * 0.05, height: w * 0.05)
+        )
+
+        // Central dome.
+        path.move(to: CGPoint(x: x(0.22), y: y(0.54)))
+        path.addQuadCurve(
+            to: CGPoint(x: x(0.78), y: y(0.54)),
+            control: CGPoint(x: x(0.50), y: y(0.14))
+        )
+        path.closeSubpath()
+
+        // Finial.
+        path.addRect(CGRect(x: x(0.475), y: y(0.08), width: w * 0.05, height: h * 0.12))
+
+        // Minarets.
+        for centre in [CGFloat(0.14), CGFloat(0.86)] {
+            path.addRoundedRect(
+                in: CGRect(x: x(centre) - w * 0.045, y: y(0.34), width: w * 0.09, height: h * 0.54),
+                cornerSize: CGSize(width: w * 0.045, height: w * 0.045)
             )
+            path.addEllipse(in: CGRect(
+                x: x(centre) - w * 0.06, y: y(0.26), width: w * 0.12, height: h * 0.12
+            ))
+        }
+
+        // Doorway, cut out by even-odd fill at the call site.
+        path.addRoundedRect(
+            in: CGRect(x: x(0.43), y: y(0.66), width: w * 0.14, height: h * 0.22),
+            cornerSize: CGSize(width: w * 0.07, height: w * 0.07)
+        )
+        return path
     }
 }
 
-/// A circular glass icon button. Used instead of a list of text menu rows.
-struct GlassIconButton: View {
-    let systemImage: String
-    var help: String = ""
-    var tint: Color?
-    let action: () -> Void
+/// The rounded-square app mark: a green gradient tile with the mosque in white.
+struct AppMark: View {
+    var size: CGFloat = 44
+    var showsShadow: Bool = true
 
-    @State private var hovering = false
+    var body: some View {
+        RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
+            .fill(Palette.markGradient)
+            .overlay {
+                MosqueShape()
+                    .fill(.white, style: FillStyle(eoFill: true))
+                    .padding(size * 0.16)
+            }
+            .frame(width: size, height: size)
+            .shadow(color: Palette.greenDeep.opacity(showsShadow ? 0.28 : 0), radius: size * 0.12, y: size * 0.05)
+    }
+}
+
+// MARK: - Cards
+
+/// A settings card with the icon-and-title header used throughout the design.
+struct SettingsCard<Content: View>: View {
+    var title: String?
+    var symbol: String?
+    var tint: Color = Palette.green
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let title {
+                HStack(spacing: 8) {
+                    if let symbol {
+                        Image(systemName: symbol)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(tint)
+                            .frame(width: 18)
+                    }
+                    Text(title)
+                        .font(.system(size: 13, weight: .semibold))
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 12)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                content
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, title == nil ? 12 : 14)
+            .padding(.top, title == nil ? 12 : 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous))
+    }
+}
+
+/// A row inside a card: label on the left, control on the right.
+struct CardRow<Trailing: View>: View {
+    let title: String
+    var subtitle: String?
+    @ViewBuilder var trailing: Trailing
+
+    init(_ title: String, subtitle: String? = nil, @ViewBuilder trailing: () -> Trailing) {
+        self.title = title
+        self.subtitle = subtitle
+        self.trailing = trailing()
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.system(size: 12.5))
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 10.5))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 8)
+            trailing
+        }
+        .frame(minHeight: 26)
+    }
+}
+
+// MARK: - Controls
+
+/// Green-tinted switch, as used throughout the design.
+struct GreenToggle: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle("", isOn: $isOn)
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .tint(Palette.green)
+            .controlSize(.small)
+    }
+}
+
+/// Two-or-more option segmented control with a green pill for the selection.
+struct GreenSegmented<Value: Hashable>: View {
+    let options: [(Value, String)]
+    @Binding var selection: Value
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(Array(options.enumerated()), id: \.offset) { _, option in
+                let selected = option.0 == selection
+                Button {
+                    selection = option.0
+                } label: {
+                    Text(option.1)
+                        .font(.system(size: 12, weight: selected ? .semibold : .regular))
+                        .foregroundStyle(selected ? Color.white : Color.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(selected ? Palette.green : Color.clear)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.primary.opacity(0.06))
+        )
+    }
+}
+
+/// Plain dropdown that sits flush with the card background.
+struct GreenPicker<Value: Hashable>: View {
+    let options: [(Value, String)]
+    @Binding var selection: Value
+    var width: CGFloat?
+
+    var body: some View {
+        Picker("", selection: $selection) {
+            ForEach(Array(options.enumerated()), id: \.offset) { _, option in
+                Text(option.1).tag(option.0)
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.menu)
+        .controlSize(.regular)
+        .tint(Palette.green)
+        .frame(width: width, alignment: .trailing)
+    }
+}
+
+/// Bordered secondary button, as used for "Detect Again" and "Test Sound".
+struct CardButton: View {
+    let title: String
+    var systemImage: String?
+    var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(tint ?? .primary)
-                .frame(width: 36, height: 36)
-                .contentShape(Circle())
+            HStack(spacing: 5) {
+                if let systemImage { Image(systemName: systemImage) }
+                Text(title)
+            }
+            .font(.system(size: 12, weight: .medium))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.primary.opacity(0.06))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.10))
+            )
         }
         .buttonStyle(.plain)
-        .glassEffect(
-            tint == nil
-                ? .regular.interactive()
-                : .regular.tint(tint!.opacity(0.45)).interactive(),
-            in: Circle()
-        )
-        .scaleEffect(hovering ? 1.06 : 1)
-        .animation(.spring(duration: 0.22), value: hovering)
-        .onHover { hovering = $0 }
-        .help(help)
     }
 }
 
-// MARK: - Progress ring
+// MARK: - Banner illustration
 
-/// The centrepiece of the panel: how much of the current prayer's window is left.
-///
-/// A ring makes the remaining time readable at a glance, and communicates that a
-/// prayer's time is a *window* with a length rather than simply "until the next
-/// one starts".
-struct WindowRing: View {
-    /// 0...1 of the window remaining, or nil when no window is open.
-    let progress: Double?
-    let title: String
-    let subtitle: String
-    let clock: String
-    let symbol: String
-    var diameter: CGFloat = 132
-
-    private var lineWidth: CGFloat { diameter * 0.075 }
+/// Simplified skyline used behind the next-prayer banner: a low sun, a few
+/// silhouettes and a horizon. Drawn rather than shipped as an asset.
+struct SkylineSilhouette: View {
+    var tint: Color = Palette.greenDeep
 
     var body: some View {
-        ZStack {
-            Circle()
-                .strokeBorder(.white.opacity(0.10), lineWidth: lineWidth)
-
-            if let progress {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack(alignment: .bottomLeading) {
                 Circle()
-                    .trim(from: 0, to: max(0.001, min(1, progress)))
-                    .stroke(Palette.windowGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .shadow(color: Palette.amber.opacity(0.45), radius: 6)
-            }
+                    .fill(Palette.amber.opacity(0.55))
+                    .frame(width: h * 0.42, height: h * 0.42)
+                    .offset(x: w * 0.60, y: -h * 0.42)
 
-            VStack(spacing: 2) {
-                Image(systemName: symbol)
-                    .font(.system(size: diameter * 0.13, weight: .medium))
-                    .foregroundStyle(progress == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(Palette.amber))
-                Text(title)
-                    .font(.system(size: diameter * 0.15, weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Text(subtitle)
-                    .font(.system(size: diameter * 0.115, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.primary)
-                Text(clock)
-                    .font(.system(size: diameter * 0.095, weight: .medium, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                HStack(alignment: .bottom, spacing: w * 0.02) {
+                    silhouette(width: w * 0.13, height: h * 0.52)
+                    silhouette(width: w * 0.17, height: h * 0.78)
+                    silhouette(width: w * 0.11, height: h * 0.44)
+                    silhouette(width: w * 0.15, height: h * 0.62)
+                }
+
+                Rectangle()
+                    .fill(tint.opacity(0.45))
+                    .frame(height: h * 0.10)
             }
-            .padding(.horizontal, 14)
         }
-        .frame(width: diameter, height: diameter)
+        .clipped()
+    }
+
+    private func silhouette(width: CGFloat, height: CGFloat) -> some View {
+        MosqueShape()
+            .fill(tint.opacity(0.55), style: FillStyle(eoFill: true))
+            .frame(width: width, height: height)
     }
 }
 
@@ -161,19 +324,18 @@ struct StatusLine: View {
 
     let text: String
     var kind: Kind = .info
-    var action: (title: String, handler: () -> Void)?
 
     private var symbol: String {
         switch kind {
-        case .info: return "info.circle"
-        case .warning: return "exclamationmark.triangle"
-        case .error: return "xmark.octagon"
+        case .info: return "info.circle.fill"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .error: return "xmark.octagon.fill"
         }
     }
 
     private var colour: Color {
         switch kind {
-        case .info: return .secondary
+        case .info: return Palette.green
         case .warning: return Palette.amber
         case .error: return .red
         }
@@ -184,15 +346,8 @@ struct StatusLine: View {
             Image(systemName: symbol)
                 .font(.system(size: 11))
                 .foregroundStyle(colour)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(text)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let action {
-                    Button(action.title, action: action.handler)
-                        .buttonStyle(.link)
-                        .font(.system(size: 11))
-                }
-            }
+            Text(text)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
         .font(.system(size: 11))

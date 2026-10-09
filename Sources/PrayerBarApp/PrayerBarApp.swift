@@ -35,8 +35,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         NSApp.setActivationPolicy(.accessory)
 
-        statusItem = StatusItemController(state: state) { [weak self] in
-            self?.openSettings()
+        statusItem = StatusItemController(state: state) { [weak self] section in
+            self?.openSettings(section: section)
         }
 
         if ProcessInfo.processInfo.environment["PRAYERBAR_OPEN_SETTINGS"] == "1" {
@@ -56,9 +56,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         return true
     }
 
-    /// Show the settings window. This is the only path — there is no SwiftUI
-    /// `Settings` scene involved, so if this runs, the window appears.
-    func openSettings() {
+    /// Show the settings window, optionally jumping to a section.
+    ///
+    /// This is the only path — there is no SwiftUI `Settings` scene involved, so
+    /// if this runs, the window appears.
+    func openSettings(section: SettingsSection = .general) {
+        state.requestedSettingsSection = section
         if settingsWindow == nil {
             settingsWindow = SettingsWindowController(state: state)
         }

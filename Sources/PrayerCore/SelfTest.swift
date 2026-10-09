@@ -269,6 +269,51 @@ public enum PrayerCoreSelfTest {
                   "unlisted zone produced no usable position")
         }
 
+        // 18. Clock format preference must actually change the output.
+        let zone = TimeZone(identifier: "Asia/Dhaka")!
+        var components = DateComponents()
+        components.year = 2026; components.month = 1; components.day = 22
+        components.hour = 17; components.minute = 24
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        let sample = calendar.date(from: components)!
+
+        let twelve = TimeFormatting.clock(sample, timeZone: zone, format: .twelveHour)
+        let twentyFour = TimeFormatting.clock(sample, timeZone: zone, format: .twentyFourHour)
+        check("clock.12h", twelve == "5:24 PM", "got \(twelve)")
+        check("clock.24h", twentyFour == "17:24", "got \(twentyFour)")
+
+        // Countdowns are written the same way regardless of the clock preference.
+        check("clock.countdown", TimeFormatting.countdown(5060) == "01:24:20", "got \(TimeFormatting.countdown(5060))")
+        check("clock.compact", TimeFormatting.countdown(5060, style: .compact) == "1h 24m",
+              "got \(TimeFormatting.countdown(5060, style: .compact))")
+
+        // The settings helper must follow the stored preference.
+        var settings = AppSettings.fresh(for: zone)
+        settings.clockFormat = .twentyFourHour
+        check("clock.setting24", settings.clock(sample) == "17:24", "got \(settings.clock(sample))")
+        settings.clockFormat = .twelveHour
+        check("clock.setting12", settings.clock(sample) == "5:24 PM", "got \(settings.clock(sample))")
+
+        // 19. Qibla bearings, against published directions.
+        let qiblaCases: [(String, Coordinate, Double, Double)] = [
+            ("dhaka", Coordinate(latitude: 23.8103, longitude: 90.4125), 277.57, 5172),
+            ("london", Coordinate(latitude: 51.5072, longitude: -0.1276), 118.99, 4794),
+            ("newyork", Coordinate(latitude: 40.7128, longitude: -74.0060), 58.48, 10306),
+            ("cairo", Coordinate(latitude: 30.0444, longitude: 31.2357), 136.14, 1287),
+        ]
+        for (label, coordinate, expectedBearing, expectedDistance) in qiblaCases {
+            let bearing = Qibla.bearing(from: coordinate)
+            let distance = Qibla.distance(from: coordinate)
+            check("qibla.\(label).bearing", abs(bearing - expectedBearing) < 0.5,
+                  String(format: "got %.2f expected %.2f", bearing, expectedBearing))
+            check("qibla.\(label).distance", abs(distance - expectedDistance) < 5,
+                  String(format: "got %.1f expected %.1f", distance, expectedDistance))
+        }
+        check("qibla.atKaaba", Qibla.distance(from: Qibla.kaaba) < 0.001)
+        check("qibla.compassPoint", Qibla.compassPoint(for: 277.57) == "W",
+              "got \(Qibla.compassPoint(for: 277.57))")
+
         return failures
     }
 }
