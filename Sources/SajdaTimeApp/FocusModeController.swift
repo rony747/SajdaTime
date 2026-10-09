@@ -128,7 +128,7 @@ final class FocusModeController: ObservableObject {
     ) {
         let frame = NSScreen.screens.reduce(CGRect.zero) { $0.union($1.frame) }
 
-        let window = NSWindow(
+        let window = AlertWindow(
             contentRect: frame,
             styleMask: [.borderless],
             backing: .buffered,

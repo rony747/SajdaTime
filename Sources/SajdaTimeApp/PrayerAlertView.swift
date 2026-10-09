@@ -293,51 +293,72 @@ struct PrayerAlertView: View {
                 .allowsHitTesting(false)
 
             VStack(spacing: 16) {
-                HStack(spacing: 18) {
-                    alertButton("Dismiss", systemImage: "xmark", action: onDismiss)
-                    alertButton("Snooze \(snoozeMinutes) min",
-                                systemImage: "clock.arrow.circlepath",
-                                action: onSnooze)
+                // The one action the design wants people to take, so it is by
+                // far the largest target and the only filled button.
+                dismissButton
+
+                HStack(spacing: 12) {
+                    secondaryButton("Snooze \(snoozeMinutes) min",
+                                    systemImage: "clock.arrow.circlepath",
+                                    action: onSnooze)
+                    secondaryButton("Mute Adhan Today",
+                                    systemImage: "speaker.slash.fill",
+                                    action: onMuteToday)
                 }
-                muteRow
             }
-            .padding(.bottom, 26)
+            .padding(.bottom, 40)
         }
         .frame(height: 345)
     }
 
-    private var muteRow: some View {
-        Button(action: onMuteToday) {
-            HStack(spacing: 8) {
-                Rectangle().fill(Palette.greenInk.opacity(0.3)).frame(width: 44, height: 1)
-                Image(systemName: "speaker.slash.fill").font(.system(size: 12))
-                Text("Mute Adhan Today")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                Rectangle().fill(Palette.greenInk.opacity(0.3)).frame(width: 44, height: 1)
+    /// The primary action: wide, tall, filled, and bound to Return.
+    private var dismissButton: some View {
+        Button(action: onDismiss) {
+            HStack(spacing: 14) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 21, weight: .bold))
+                Text("Dismiss")
+                    .font(.system(size: 25, weight: .bold, design: .rounded))
+                    .tracking(0.2)
             }
-            .foregroundStyle(Palette.greenInk.opacity(0.85))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func alertButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 9) {
-                Image(systemName: systemImage).font(.system(size: 14, weight: .bold))
-                Text(title).font(.system(size: 17, weight: .semibold, design: .rounded))
-            }
-            .foregroundStyle(Palette.greenInk)
-            .frame(width: 250)
-            .padding(.vertical, 15)
+            .foregroundStyle(.white)
+            .frame(width: 480, height: 76)
             .background(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                    .fill(.white.opacity(0.82))
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Palette.inkGradient)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                    .strokeBorder(.white.opacity(0.95), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(.white.opacity(0.35), lineWidth: 1.5)
             )
-            .shadow(color: Palette.greenDeep.opacity(0.15), radius: 12, y: 4)
+            .shadow(color: Palette.greenInk.opacity(0.45), radius: 26, y: 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut(.defaultAction)
+    }
+
+    private func secondaryButton(
+        _ title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage).font(.system(size: 13, weight: .semibold))
+                Text(title).font(.system(size: 16, weight: .semibold, design: .rounded))
+            }
+            .foregroundStyle(Palette.greenInk)
+            .frame(width: 234, height: 50)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.white.opacity(0.78))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(.white.opacity(0.9), lineWidth: 1.5)
+            )
+            .shadow(color: Palette.greenDeep.opacity(0.14), radius: 12, y: 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

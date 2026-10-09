@@ -272,8 +272,17 @@ the merit of salah, and Dismiss / Snooze / Mute-Adhan-Today.
   invented.
 - **Text contrast is tuned per backdrop.** Dark text on a light wash; the night
   image needs a much stronger wash than the daylight ones.
+- **Dismiss is the primary action**: a filled 480x76 button on the emerald ink,
+  centred, with Snooze and Mute Adhan Today as smaller secondary pills beneath
+  it. It is also bound to Return, and Escape always dismisses.
 - Snooze re-shows after the configured interval. "Mute Adhan Today" stops the
-  adhan audio until midnight. Escape always dismisses.
+  adhan audio until midnight.
+
+The reminder's window is a borderless `NSWindow`, and those return
+`canBecomeKey == false` by default — so the window could never take key focus and
+Escape and Return were dead. It is an `AlertWindow` subclass that overrides both
+`canBecomeKey` and `canBecomeMain`. `SAJDA_DEBUG=1` logs whether the window
+actually became key.
 
 Focus Mode and the reminder do not stack: while the reminder is up, the focus
 overlay is suppressed for that prayer.

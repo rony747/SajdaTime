@@ -7,6 +7,14 @@ import SajdaCore
 /// Kept separate from `FocusModeController`: that one covers the screen for a
 /// stretch of time as a discipline aid, whereas this is a notice that wants an
 /// answer — dismiss, or snooze for a few minutes.
+/// A borderless `NSWindow` returns `canBecomeKey == false` by default, so the
+/// reminder could never take key focus — which left Escape and Return dead.
+/// Overriding it is what makes the window able to receive them.
+final class AlertWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
 @MainActor
 final class PrayerAlertController: ObservableObject {
 
@@ -56,7 +64,7 @@ final class PrayerAlertController: ObservableObject {
         )
         // One window per screen, each composed for its own aspect ratio.
         for screen in NSScreen.screens {
-            let window = NSWindow(
+            let window = AlertWindow(
                 contentRect: screen.frame,
                 styleMask: [.borderless],
                 backing: .buffered,
@@ -73,8 +81,11 @@ final class PrayerAlertController: ObservableObject {
             windows.append(window)
         }
 
-        windows.first?.makeKeyAndOrderFront(nil)
+        // Activate first, then take key: the reminder has to accept Escape and
+        // Return, and it cannot do that while it is not the key window.
         NSApp.activate(ignoringOtherApps: true)
+        windows.first?.makeKeyAndOrderFront(nil)
+        windows.first?.makeFirstResponder(windows.first?.contentView)
         isVisible = true
 
         // Escape always dismisses, whatever the design does.
@@ -87,7 +98,12 @@ final class PrayerAlertController: ObservableObject {
         }
 
         if ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1" {
-            NSLog("Sajda Time: reminder shown for \(prayer.displayName), quote=\(quote.id), backdrop=alert-\(prayer.rawValue)")
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(700))
+                let key = self.windows.first?.isKeyWindow ?? false
+                let active = NSApp.isActive
+                NSLog("Sajda Time: reminder shown for \(prayer.displayName), quote=\(quote.id), backdrop=alert-\(prayer.rawValue), key=\(key), appActive=\(active)")
+            }
         }
     }
 
