@@ -144,14 +144,16 @@ struct PanelView: View {
                 HStack(alignment: .center, spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(state.activeWindow == nil ? "Next Prayer" : "Current Prayer")
-                            .font(.system(size: 9.5, design: .rounded))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                            .tracking(0.5)
+                            .foregroundStyle(Palette.gold.opacity(0.9))
                         Text(subject?.prayer.displayName ?? "—")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(Palette.cream)
                         if let subject {
                             Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Palette.greenInk)
+                                .foregroundStyle(Palette.gold)
                                 .monospacedDigit()
                         }
                     }
@@ -170,9 +172,10 @@ struct PanelView: View {
             .background(Palette.bannerGradient)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .contentShape(Rectangle())
-            // The banner artwork and gradient are always pale, so the text is
-            // pinned to the light scheme; otherwise it turned white on cream.
-            .environment(\.colorScheme, .light)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Palette.gold.opacity(0.30), lineWidth: 1)
+            )
     }
 
     /// Step the focus through the day's prayers so each window can be inspected.
@@ -226,7 +229,7 @@ struct PanelView: View {
         return HStack(spacing: 10) {
                 Image(systemName: prayer.symbolName)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(isActive ? Palette.green : Palette.tint(for: prayer))
+                    .foregroundStyle(isActive ? Palette.accent : Palette.tint(for: prayer))
                     .frame(width: 22)
                 Text(prayer.displayName)
                     .font(.system(size: 14, weight: isActive ? .semibold : .regular, design: .rounded))
@@ -238,7 +241,7 @@ struct PanelView: View {
                         .foregroundStyle(Palette.accentText(scheme))
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(Capsule().fill(Palette.green.opacity(0.18)))
+                        .background(Capsule().fill(Palette.accent.opacity(0.18)))
                 }
                 // Both ends of the window, so it is clear how long the prayer
                 // remains valid rather than only when it starts.
@@ -258,7 +261,7 @@ struct PanelView: View {
             .padding(.vertical, 9)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isActive ? Palette.green.opacity(0.16) : Color.primary.opacity(0.05))
+                    .fill(isActive ? Palette.accent.opacity(0.16) : Color.primary.opacity(0.05))
             )
             .help(windowSummary(for: prayer))
     }

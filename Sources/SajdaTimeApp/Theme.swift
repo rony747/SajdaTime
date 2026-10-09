@@ -26,6 +26,31 @@ enum Palette {
         )
     }
 
+    // MARK: - The reminder card
+    //
+    // Deep emerald, brass and ivory, from the supplied design. Kept apart from
+    // the greens above: these are for the full-screen reminder only, and the app
+    // surfaces stay on the lighter palette.
+
+    /// Card body. Slightly transparent so the photograph reads through it.
+    static let emeraldCard = Color(red: 0.078, green: 0.220, blue: 0.173)
+    /// Inset fills inside the card: the time chip and the hadith panel.
+    static let emeraldInset = Color(red: 0.035, green: 0.141, blue: 0.110)
+    /// The Dismiss fill, a step brighter so the primary action separates.
+    static let emeraldAction = Color(red: 0.106, green: 0.361, blue: 0.255)
+    /// Brass, for rules, borders and the ornamental work.
+    static let gold = Color(red: 0.796, green: 0.663, blue: 0.416)
+    /// Warm ivory for every piece of text on the emerald card.
+    static let cream = Color(red: 0.957, green: 0.922, blue: 0.839)
+
+    /// The app's interactive accent. Brass rather than green, so selections and
+    /// toggles read as the same material as the reminder's ornament.
+    static let accent = gold
+    /// Fill behind a selected row or pill on a light surface.
+    static let accentSoft = Color(red: 0.976, green: 0.941, blue: 0.859)
+    /// Muted ivory for the secondary lines on an emerald card.
+    static let creamMuted = Color(red: 0.957, green: 0.922, blue: 0.839).opacity(0.72)
+
     /// Warm tone for the sun-related prayers.
     static let amber = Color(red: 0.97, green: 0.65, blue: 0.20)
     /// Cool tone for the night prayer.
@@ -47,14 +72,14 @@ enum Palette {
     /// `greenDeep` is correct on the pale banner, but on a dark card or a
     /// dark-tinted row it became dark-on-dark and disappeared.
     static func accentText(_ scheme: ColorScheme) -> Color {
-        scheme == .dark
-            ? Color(red: 0.49, green: 0.88, blue: 0.63)
-            : greenInk
+        // Brass is legible on the dark popover but not on a pale card, where the
+        // deep emerald still carries. The emerald card supplies its own colours.
+        scheme == .dark ? gold : greenInk
     }
 
     /// Fill for a selected row or pill.
     static func selectionFill(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? green.opacity(0.26) : greenSoft
+        scheme == .dark ? gold.opacity(0.22) : accentSoft
     }
 
     static var markGradient: LinearGradient {
@@ -68,8 +93,8 @@ enum Palette {
     static var bannerGradient: LinearGradient {
         LinearGradient(
             colors: [
-                Color(red: 0.90, green: 0.97, blue: 0.92),
-                Color(red: 0.98, green: 0.95, blue: 0.86),
+                Color(red: 0.094, green: 0.259, blue: 0.204),
+                Color(red: 0.043, green: 0.169, blue: 0.133),
             ],
             startPoint: .leading,
             endPoint: .trailing
@@ -218,7 +243,7 @@ struct BannerArt: View {
 struct SettingsCard<Content: View>: View {
     var title: String?
     var symbol: String?
-    var tint: Color = Palette.green
+    var tint: Color = Palette.accent
     @ViewBuilder var content: Content
 
     @Environment(\.colorScheme) private var scheme
@@ -303,20 +328,20 @@ struct CardRow<Trailing: View>: View {
 // MARK: - Controls
 
 /// Green-tinted switch, as used throughout the design.
-struct GreenToggle: View {
+struct SettingToggle: View {
     @Binding var isOn: Bool
 
     var body: some View {
         Toggle("", isOn: $isOn)
             .labelsHidden()
             .toggleStyle(.switch)
-            .tint(Palette.green)
+            .tint(Palette.accent)
             .controlSize(.small)
     }
 }
 
 /// Two-or-more option segmented control with a green pill for the selection.
-struct GreenSegmented<Value: Hashable>: View {
+struct SettingSegmented<Value: Hashable>: View {
     let options: [(Value, String)]
     @Binding var selection: Value
 
@@ -334,7 +359,7 @@ struct GreenSegmented<Value: Hashable>: View {
                         .padding(.vertical, 5)
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(selected ? Palette.green : Color.clear)
+                                .fill(selected ? Palette.accent : Color.clear)
                         )
                         .contentShape(Rectangle())
                 }
@@ -350,7 +375,7 @@ struct GreenSegmented<Value: Hashable>: View {
 }
 
 /// Plain dropdown that sits flush with the card background.
-struct GreenPicker<Value: Hashable>: View {
+struct SettingPicker<Value: Hashable>: View {
     let options: [(Value, String)]
     @Binding var selection: Value
     var width: CGFloat?
@@ -364,7 +389,7 @@ struct GreenPicker<Value: Hashable>: View {
         .labelsHidden()
         .pickerStyle(.menu)
         .controlSize(.regular)
-        .tint(Palette.green)
+        .tint(Palette.accent)
         .frame(width: width, alignment: .trailing)
     }
 }
@@ -455,7 +480,7 @@ struct StatusLine: View {
 
     private var colour: Color {
         switch kind {
-        case .info: return Palette.green
+        case .info: return Palette.accent
         case .warning: return Palette.amber
         case .error: return .red
         }

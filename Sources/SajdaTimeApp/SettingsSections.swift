@@ -59,7 +59,7 @@ struct GeneralSection: View {
 
         SettingsCard(title: "Startup", symbol: "power") {
             CardRow("Launch at login", subtitle: "Start Sajda Time automatically when you log in to your Mac.") {
-                GreenToggle(isOn: state.binding(\.launchAtLogin))
+                SettingToggle(isOn: state.binding(\.launchAtLogin))
             }
         }
     }
@@ -77,16 +77,17 @@ struct SummaryCard: View {
                         Image(systemName: "mappin.and.ellipse").font(.system(size: 13, weight: .medium))
                         Text(state.settings.locationName.isEmpty ? "Unknown place" : state.settings.locationName)
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Palette.cream)
                         Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Palette.gold.opacity(0.8))
                     }
                     Text(TimeFormatting.longDate(state.now, timeZone: state.settings.displayTimeZone))
                         .font(.system(size: 11, design: .rounded))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.cream.opacity(0.72))
                     if state.settings.showHijriDate, let hijri = state.today?.hijri {
                         Text(hijri.formatted)
                             .font(.system(size: 11, design: .rounded))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Palette.cream.opacity(0.72))
                     }
                 }
                 Spacer(minLength: 0)
@@ -94,13 +95,15 @@ struct SummaryCard: View {
                 if let subject = state.countdownSubject {
                     VStack(alignment: .trailing, spacing: 1) {
                         Text("Next Prayer")
-                            .font(.system(size: 10, design: .rounded))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .tracking(0.5)
+                            .foregroundStyle(Palette.gold.opacity(0.9))
                         Text(subject.prayer.displayName)
                             .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .foregroundStyle(Palette.cream)
                         Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Palette.greenInk)
+                            .foregroundStyle(Palette.gold)
                             .monospacedDigit()
                     }
                 }
@@ -119,7 +122,10 @@ struct SummaryCard: View {
         }
         .background(Palette.bannerGradient)
         .clipShape(RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous))
-        .environment(\.colorScheme, .light)
+        .overlay(
+            RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous)
+                .strokeBorder(Palette.gold.opacity(0.30), lineWidth: 1)
+        )
         .contentShape(Rectangle())
         .onTapGesture { goTo(.prayerTimes) }
     }
@@ -132,7 +138,7 @@ struct PrayerTimesSection: View {
     var body: some View {
         SettingsCard(title: "Source", symbol: "antenna.radiowaves.left.and.right") {
             CardRow("Time source") {
-                GreenSegmented(
+                SettingSegmented(
                     options: TimeSourceMode.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.timeSourceMode)
                 )
@@ -149,7 +155,7 @@ struct PrayerTimesSection: View {
                 }
             }
             CardRow("Fetch times from Aladhan", subtitle: "Falls back to on-device calculation when offline.") {
-                GreenToggle(isOn: state.binding(\.fetchLiveTimes))
+                SettingToggle(isOn: state.binding(\.fetchLiveTimes))
             }
             CardRow("Showing") {
                 Text(state.today?.source.label ?? "—")
@@ -160,28 +166,28 @@ struct PrayerTimesSection: View {
 
         SettingsCard(title: "Method", symbol: "function") {
             CardRow("Calculation Method") {
-                GreenPicker(
+                SettingPicker(
                     options: CalculationMethod.all.map { ($0.id, $0.name) },
                     selection: state.binding(\.methodID),
                     width: 260
                 )
             }
             CardRow("Madhab (Asr)") {
-                GreenSegmented(
+                SettingSegmented(
                     options: [(Madhab.standard, "Shafi'i"), (Madhab.hanafi, "Hanafi")],
                     selection: state.binding(\.madhab)
                 )
                 .frame(width: 240)
             }
             CardRow("High latitude") {
-                GreenPicker(
+                SettingPicker(
                     options: HighLatitudeRule.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.highLatitudeRule),
                     width: 240
                 )
             }
             CardRow("Auto-detect method") {
-                GreenToggle(isOn: state.binding(\.autoDetectMethod))
+                SettingToggle(isOn: state.binding(\.autoDetectMethod))
             }
         }
 
@@ -261,10 +267,10 @@ struct NotificationsSection: View {
     var body: some View {
         SettingsCard(title: "Alerts", symbol: "bell.fill") {
             CardRow("Enable prayer time notifications") {
-                GreenToggle(isOn: state.binding(\.notificationsEnabled))
+                SettingToggle(isOn: state.binding(\.notificationsEnabled))
             }
             CardRow("Reminder timing", subtitle: "Applied to every prayer unless overridden below.") {
-                GreenPicker(
+                SettingPicker(
                     options: [(0, "Off"), (5, "5 min before"), (10, "10 min before"),
                               (15, "15 min before"), (20, "20 min before"), (30, "30 min before")],
                     selection: state.optionalIntBinding(\.defaultEarlyReminderMinutes),
@@ -272,24 +278,24 @@ struct NotificationsSection: View {
                 )
             }
             CardRow("Iqamah offset") {
-                GreenPicker(
+                SettingPicker(
                     options: [(0, "Off"), (5, "5 min"), (10, "10 min"), (15, "15 min"), (20, "20 min")],
                     selection: state.optionalIntBinding(\.defaultIqamahMinutes),
                     width: 140
                 )
             }
             CardRow("Show a full-screen reminder", subtitle: "Covers the screen when a prayer begins, with a short hadith and a backdrop for that prayer.") {
-                GreenToggle(isOn: state.binding(\.fullScreenReminder))
+                SettingToggle(isOn: state.binding(\.fullScreenReminder))
             }
             CardRow("Close the reminder automatically", subtitle: "It counts down and then closes itself; Dismiss and Escape always work too.") {
-                GreenPicker(
+                SettingPicker(
                     options: [(0, "Never"), (5, "5 min"), (10, "10 min"), (15, "15 min"), (30, "30 min")],
                     selection: state.binding(\.alertAutoCloseMinutes),
                     width: 120
                 )
             }
             CardRow("Snooze length") {
-                GreenPicker(
+                SettingPicker(
                     options: [(5, "5 min"), (10, "10 min"), (15, "15 min"), (20, "20 min")],
                     selection: state.binding(\.snoozeMinutes),
                     width: 120
@@ -297,7 +303,7 @@ struct NotificationsSection: View {
             }
             CardRow("Default sound", subtitle: "Used for every reminder unless a prayer overrides it.") {
                 HStack(spacing: 8) {
-                    GreenPicker(
+                    SettingPicker(
                         options: NotificationService.availableSounds.map { ($0, $0) },
                         selection: state.binding(\.defaultSoundName),
                         width: 170
@@ -308,7 +314,7 @@ struct NotificationsSection: View {
                 }
             }
             CardRow("Adhan at prayer time", subtitle: "Plays an audio file you choose; notifications otherwise use the sound above.") {
-                GreenToggle(isOn: state.binding(\.playFullAdhan))
+                SettingToggle(isOn: state.binding(\.playFullAdhan))
             }
             if state.settings.playFullAdhan {
                 CardRow("Audio file") {
@@ -330,7 +336,7 @@ struct NotificationsSection: View {
             }
             CardRow("Test the full-screen reminder", subtitle: "Shows it straight away, with that prayer's backdrop.") {
                 HStack(spacing: 8) {
-                    GreenPicker(
+                    SettingPicker(
                         options: Prayer.obligatory.map { ($0, $0.displayName) },
                         selection: $previewPrayer,
                         width: 130
@@ -388,7 +394,7 @@ struct PrayerReminderRow: View {
                 Text(reminder.mode == .off ? "off" : reminder.mode.displayName.lowercased())
                     .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.secondary)
-                GreenToggle(isOn: Binding(
+                SettingToggle(isOn: Binding(
                     get: { reminder.mode != .off },
                     set: { on in state.reminderModeBinding(prayer).wrappedValue = on ? .automatic : .off }
                 ))
@@ -406,7 +412,7 @@ struct PrayerReminderRow: View {
             if expanded {
                 VStack(alignment: .leading, spacing: 8) {
                     CardRow("Timing") {
-                        GreenSegmented(
+                        SettingSegmented(
                             options: ReminderMode.allCases.map { ($0, $0.displayName) },
                             selection: state.reminderModeBinding(prayer)
                         )
@@ -416,7 +422,7 @@ struct PrayerReminderRow: View {
                     if reminder.mode == .manual {
                         ForEach(Array(reminder.offsets.enumerated()), id: \.offset) { index, offset in
                             HStack(spacing: 8) {
-                                GreenPicker(
+                                SettingPicker(
                                     options: ReminderOffset.Anchor.allCases.map { ($0, $0.displayName) },
                                     selection: offsetAnchorBinding(index),
                                     width: 100
@@ -448,10 +454,10 @@ struct PrayerReminderRow: View {
                     }
 
                     CardRow("Adhan") {
-                        GreenToggle(isOn: state.reminderBinding(prayer, \.playAdhan))
+                        SettingToggle(isOn: state.reminderBinding(prayer, \.playAdhan))
                     }
                     CardRow("Sound") {
-                        GreenPicker(
+                        SettingPicker(
                             options: [("", "App default")] + NotificationService.availableSounds.map { ($0, $0) },
                             selection: Binding(
                                 get: { reminder.soundName ?? "" },
@@ -512,7 +518,7 @@ struct LocationSection: View {
     var body: some View {
         SettingsCard(title: "Position", symbol: "mappin.circle.fill") {
             CardRow("Mode") {
-                GreenSegmented(
+                SettingSegmented(
                     options: LocationMode.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.locationMode)
                 )
@@ -549,7 +555,7 @@ struct LocationSection: View {
 
         SettingsCard(title: "Timezone", symbol: "globe") {
             CardRow("Show times on") {
-                GreenSegmented(
+                SettingSegmented(
                     options: TimeZoneMode.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.timeZoneMode)
                 )
@@ -557,7 +563,7 @@ struct LocationSection: View {
             }
             if state.settings.timeZoneMode == .explicit {
                 CardRow("Zone") {
-                    GreenPicker(
+                    SettingPicker(
                         options: Self.zones.map { ($0, $0) },
                         selection: state.binding(\.explicitTimeZoneID),
                         width: 260
@@ -597,7 +603,7 @@ struct AppearanceSection: View {
     var body: some View {
         SettingsCard(title: "Appearance", symbol: "circle.lefthalf.filled") {
             CardRow("Theme", subtitle: "Applies to the panel and the settings window.") {
-                GreenSegmented(
+                SettingSegmented(
                     options: AppAppearance.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.appearance)
                 )
@@ -622,7 +628,7 @@ struct AppearanceSection: View {
 
         SettingsCard(title: "Clock", symbol: "clock.fill") {
             CardRow("Time format", subtitle: "Applies to the panel, the menu bar and all times shown here.") {
-                GreenSegmented(
+                SettingSegmented(
                     options: [(ClockFormat.twelveHour, "12-hour"), (ClockFormat.twentyFourHour, "24-hour")],
                     selection: state.binding(\.clockFormat)
                 )
@@ -646,10 +652,10 @@ struct AppearanceSection: View {
 
         SettingsCard(title: "Panel", symbol: "rectangle.on.rectangle") {
             CardRow("Show Ishraq time", subtitle: "Adds the voluntary prayer shortly after sunrise.") {
-                GreenToggle(isOn: state.binding(\.showIshraq))
+                SettingToggle(isOn: state.binding(\.showIshraq))
             }
             CardRow("Show Hijri date") {
-                GreenToggle(isOn: state.binding(\.showHijriDate))
+                SettingToggle(isOn: state.binding(\.showHijriDate))
             }
         }
     }
@@ -663,14 +669,14 @@ struct MenubarSection: View {
     var body: some View {
         SettingsCard(title: "Menu bar item", symbol: "menubar.rectangle") {
             CardRow("Shows") {
-                GreenPicker(
+                SettingPicker(
                     options: MenuBarLabelStyle.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.menuBarLabelStyle),
                     width: 230
                 )
             }
             CardRow("Counts down") {
-                GreenPicker(
+                SettingPicker(
                     options: CountdownTarget.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.countdownTarget),
                     width: 230
@@ -726,7 +732,7 @@ struct FocusSection: View {
     var body: some View {
         SettingsCard(title: "Focus", symbol: "moon.haze.fill") {
             CardRow("Enable Focus Mode", subtitle: "Covers the screen at the selected prayers.") {
-                GreenToggle(isOn: state.binding(\.focusModeEnabled))
+                SettingToggle(isOn: state.binding(\.focusModeEnabled))
             }
             CardRow("Duration") {
                 Stepper("\(state.settings.focusDurationMinutes) min",
@@ -737,21 +743,21 @@ struct FocusSection: View {
 
         SettingsCard(title: "Behaviour", symbol: "slider.horizontal.3") {
             CardRow("Backdrop") {
-                GreenPicker(
+                SettingPicker(
                     options: BlurIntensity.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.focusBlurIntensity),
                     width: 140
                 )
             }
             CardRow("Trigger at") {
-                GreenPicker(
+                SettingPicker(
                     options: FocusTrigger.allCases.map { ($0, $0.displayName) },
                     selection: state.binding(\.focusTrigger),
                     width: 190
                 )
             }
             CardRow("Allow ⌘⎋ to exit early") {
-                GreenToggle(isOn: state.binding(\.focusEmergencyExit))
+                SettingToggle(isOn: state.binding(\.focusEmergencyExit))
             }
             HStack {
                 CardButton(title: "Try it for 10 seconds", systemImage: "eye") {
