@@ -13,6 +13,14 @@ public struct ReminderQuote: Sendable, Identifiable, Equatable {
     /// Collection and number, e.g. "Jami` at-Tirmidhi 413".
     public let reference: String
 
+    /// The text as it should read on screen.
+    ///
+    /// Some sayings carry their own internal quotation marks; wrapping those in
+    /// another pair produced a doubled closing quote, so they are left alone.
+    public var displayText: String {
+        text.contains("\u{201C}") ? text : "\u{201C}\(text)\u{201D}"
+    }
+
     public init(id: String, kind: Kind, text: String, reference: String) {
         self.id = id
         self.kind = kind

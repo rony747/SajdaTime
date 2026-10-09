@@ -366,6 +366,19 @@ public enum SajdaCoreSelfTest {
             check("quotes.unique.\(quote.id)",
                   ReminderQuotes.all.filter { $0.id == quote.id }.count == 1)
         }
+        // The rendered form must never double up its quotation marks, and any
+        // marks inside a saying must be balanced.
+        for quote in ReminderQuotes.all {
+            let rendered = quote.displayText
+            check("quotes.noDoubledMark.\(quote.id)",
+                  !rendered.contains("””") && !rendered.contains("““"),
+                  rendered)
+            let opens = rendered.filter { $0 == "“" }.count
+            let closes = rendered.filter { $0 == "”" }.count
+            check("quotes.balanced.\(quote.id)", opens == closes,
+                  "\(opens) opening vs \(closes) closing")
+        }
+
         // The same saying must never appear twice in a row.
         let firstQuote = ReminderQuotes.random(excluding: nil)
         let secondQuote = ReminderQuotes.random(excluding: firstQuote.id)

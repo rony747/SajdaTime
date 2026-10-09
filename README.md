@@ -278,6 +278,11 @@ the merit of salah, and Dismiss / Snooze / Mute-Adhan-Today.
 Focus Mode and the reminder do not stack: while the reminder is up, the focus
 overlay is suppressed for that prayer.
 
+**One window per display.** A single window spanning the union of all screens
+centred the content *across* them, which put it low on whichever display the
+person was actually looking at, and forced the photograph to zoom hard into its
+centre. Each screen now gets its own window, composed for its own aspect ratio.
+
 ### Testing it
 
 Easiest is **Notifications › Test the full-screen reminder**: pick a prayer and

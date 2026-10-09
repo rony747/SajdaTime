@@ -16,7 +16,10 @@ final class PrayerAlertController: ObservableObject {
     var onSnooze: ((Prayer, TimeInterval) -> Void)?
     var onMuteToday: (() -> Void)?
 
-    private var window: NSWindow?
+    /// One window per display. A single window spanning the union of all screens
+    /// centred the content across them, which put it low on whichever screen the
+    /// person was actually looking at and zoomed the backdrop oddly.
+    private var windows: [NSWindow] = []
     private var lastQuoteID: String?
     private var keyMonitor: Any?
 
@@ -32,19 +35,6 @@ final class PrayerAlertController: ObservableObject {
         // A different saying each time, never the same one twice in a row.
         let quote = ReminderQuotes.random(excluding: lastQuoteID)
         lastQuoteID = quote.id
-
-        let screenFrame = NSScreen.screens.reduce(CGRect.zero) { $0.union($1.frame) }
-        let window = NSWindow(
-            contentRect: screenFrame,
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        window.level = .screenSaver
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        window.isOpaque = true
-        window.backgroundColor = .black
-        window.hasShadow = false
 
         let content = PrayerAlertView(
             prayer: prayer,
@@ -64,13 +54,27 @@ final class PrayerAlertController: ObservableObject {
                 self?.dismiss()
             }
         )
-        window.contentView = NSHostingView(rootView: content)
-        window.setFrame(screenFrame, display: true)
-        window.makeKeyAndOrderFront(nil)
-        window.orderFrontRegardless()
-        NSApp.activate(ignoringOtherApps: true)
+        // One window per screen, each composed for its own aspect ratio.
+        for screen in NSScreen.screens {
+            let window = NSWindow(
+                contentRect: screen.frame,
+                styleMask: [.borderless],
+                backing: .buffered,
+                defer: false
+            )
+            window.level = .screenSaver
+            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+            window.isOpaque = true
+            window.backgroundColor = .black
+            window.hasShadow = false
+            window.contentView = NSHostingView(rootView: content)
+            window.setFrame(screen.frame, display: true)
+            window.orderFrontRegardless()
+            windows.append(window)
+        }
 
-        self.window = window
+        windows.first?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
         isVisible = true
 
         // Escape always dismisses, whatever the design does.
@@ -92,8 +96,8 @@ final class PrayerAlertController: ObservableObject {
             NSEvent.removeMonitor(keyMonitor)
             self.keyMonitor = nil
         }
-        window?.orderOut(nil)
-        window = nil
+        for window in windows { window.orderOut(nil) }
+        windows = []
         isVisible = false
     }
 }
