@@ -24,7 +24,8 @@ location, a countdown in the menu bar, and per-prayer reminders you control.
 open "dist/PrayerBar.app"
 ```
 
-Requires Xcode (tested with Xcode 27 / Swift 6.4) and macOS 14 or later.
+Requires Xcode (tested with Xcode 27 / Swift 6.4) and **macOS 26 or later**,
+because the interface is built on Liquid Glass (`.glassEffect`, `GlassEffectContainer`).
 
 The result is an ad-hoc signed `.app` that runs locally. It is **not** signed
 with a Developer ID and **not** notarised, so it cannot be distributed to other
@@ -87,6 +88,20 @@ Sources/
   PrayerBarCtl/        the verification CLI
 Tests/PrayerCoreTests/ XCTest wrapper around the shared self-test
 ```
+
+## Design
+
+A distinct identity rather than a re-skin, built on Liquid Glass:
+
+- **Palette** — indigo and violet with a warm amber for whichever prayer is
+  currently in its time, so the active state is a colour it earns rather than a
+  permanent accent.
+- **Panel** — a progress ring showing what is left of the open window, a row of
+  glass chips for the day, and circular glass buttons. A ring makes the remaining
+  time legible at a glance and reinforces that a prayer is a window with a length.
+- **Settings** — a `NavigationSplitView` source list with native
+  `Form`/`Section`/`LabeledContent` content, not a horizontal tab strip and
+  hand-rolled rows.
 
 ## Design decisions worth knowing
 

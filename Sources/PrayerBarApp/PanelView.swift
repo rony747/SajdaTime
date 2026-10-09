@@ -1,283 +1,235 @@
 import SwiftUI
 import PrayerCore
 
-/// The popover shown when the menu bar item is clicked.
+/// The menu bar popover.
+///
+/// Structured around a progress ring and a row of glass chips rather than a list
+/// of times, which suits the fact that each prayer is a *window* with a length:
+/// Fajr lasts about an hour, Isha until Islamic midnight.
 struct PanelView: View {
-    /// Width the popover is sized to; the panel itself fills it.
-    static let preferredWidth: CGFloat = 320
+    static let preferredWidth: CGFloat = 340
 
     @ObservedObject var state: AppState
-    /// Supplied by the app delegate, which knows how to open settings for an
-    /// accessory app whose UI lives in an AppKit popover.
     let onOpenSettings: () -> Void
+
+    /// Manually selected prayer, if the user tapped a chip.
+    @State private var selection: Prayer?
 
     private var zone: TimeZone { state.settings.displayTimeZone }
 
-    private var clockFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.timeZone = zone
-        formatter.dateFormat = "h:mm a"
-        return formatter
-    }
-
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.timeZone = zone
-        formatter.dateFormat = "EEEE, MMMM d, yyyy"
-        return formatter
+    /// Which prayer the panel is describing: the open window, else the one the
+    /// countdown points at, else whatever the user picked.
+    private var focus: Prayer? {
+        selection ?? state.activeWindow?.prayer ?? state.countdownSubject?.prayer
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 16) {
             header
-            nextPrayerBlock
-            prayerList
-            Divider().padding(.vertical, 6)
-            metadata
-            Divider().padding(.vertical, 6)
-            menuItems
+            ring
+            chipRow
+            detailLine
+            actionRow
         }
-        .padding(12)
+        .padding(16)
         .frame(width: Self.preferredWidth)
     }
 
-    // MARK: - Sections
+    // MARK: - Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(dateFormatter.string(from: state.now).uppercased())
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
-            if state.settings.showHijriDate, let hijri = state.today?.hijri {
-                Text(hijri.formatted)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 4)
-        .padding(.bottom, 10)
-    }
-
-    @ViewBuilder
-    private var nextPrayerBlock: some View {
-        if let subject = state.countdownSubject {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Image(systemName: subject.prayer.symbolName)
-                        .font(.system(size: 18))
-                        .foregroundStyle(Theme.accent)
-                        .frame(width: 24)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(subject.prayer.displayName)
-                            .font(.system(size: 20, weight: .semibold))
-                        Text(state.countdownText(for: subject))
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
-                    Spacer(minLength: 8)
-                    Text(clockFormatter.string(from: subject.date))
-                        .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(Theme.accent)
-                        .monospacedDigit()
-                }
-
-                // When a prayer's own window is closing, say what closes it and
-                // how long the window actually was — Fajr is about an hour, not
-                // the whole morning.
-                if let window = subject.window {
-                    Text(windowCaption(window))
-                        .font(.system(size: 11))
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(dayFormatter.string(from: state.now))
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                if state.settings.showHijriDate, let hijri = state.today?.hijri {
+                    Text(hijri.formatted)
+                        .font(.system(size: 11, design: .rounded))
                         .foregroundStyle(.secondary)
-                        .padding(.leading, 32)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(.horizontal, 4)
-            .padding(.bottom, 10)
-        }
-    }
-
-    private func windowCaption(_ window: PrayerWindow) -> String {
-        let end = clockFormatter.string(from: window.end)
-        let duration = Self.durationFormatter.string(from: window.duration) ?? ""
-        var caption = "\(window.prayer.displayName) time ends at \(end) (\(window.endLabel)) · window \(duration)"
-        if let necessity = window.necessityEnd {
-            caption += ". Until \(clockFormatter.string(from: necessity)) is the time of necessity."
-        }
-        return caption
-    }
-
-    private static let durationFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute]
-        formatter.unitsStyle = .abbreviated
-        formatter.maximumUnitCount = 2
-        return formatter
-    }()
-
-    private var prayerList: some View {
-        VStack(spacing: 1) {
-            ForEach(displayPrayers) { entry in
-                prayerRow(entry)
-            }
-        }
-    }
-
-    /// A row in the list. Ishraq is derived rather than stored: it is the
-    /// voluntary prayer shortly after sunrise, shown only when asked for.
-    private struct PanelRow: Identifiable {
-        let id: String
-        let prayer: Prayer
-        let date: Date
-        let label: String
-        var isDerived: Bool = false
-    }
-
-    private var displayPrayers: [PanelRow] {
-        guard let today = state.today else { return [] }
-        var rows: [PanelRow] = []
-        for entry in today.ordered {
-            rows.append(PanelRow(id: entry.prayer.rawValue, prayer: entry.prayer, date: entry.date, label: entry.prayer.displayName))
-            if entry.prayer == .sunrise, state.settings.showIshraq {
-                rows.append(PanelRow(
-                    id: "ishraq",
-                    prayer: .sunrise,
-                    date: entry.date.addingTimeInterval(20 * 60),
-                    label: "Ishraq",
-                    isDerived: true
-                ))
-            }
-        }
-        return rows
-    }
-
-    private func prayerRow(_ entry: PanelRow) -> some View {
-        let isHighlighted = entry.prayer == state.highlightedPrayer && !entry.isDerived
-        return HStack(spacing: 8) {
-            Image(systemName: entry.prayer.symbolName)
-                .font(.system(size: 13))
-                .foregroundStyle(isHighlighted ? Theme.accentStrong : .secondary)
-                .frame(width: 20)
-            Text(entry.label)
-                .font(.system(size: 13, weight: isHighlighted ? .semibold : .regular))
-                .foregroundStyle(entry.isDerived
-                    ? AnyShapeStyle(.secondary)
-                    : (isHighlighted ? AnyShapeStyle(Theme.accentStrong) : AnyShapeStyle(.primary)))
             Spacer(minLength: 8)
-            if isHighlighted {
-                Text(state.compactCountdown)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Theme.accentStrong)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Theme.accent.opacity(0.18)))
-                    .monospacedDigit()
+            if !state.settings.locationName.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "location.fill").font(.system(size: 9))
+                    Text(state.settings.locationName).font(.system(size: 11, design: .rounded))
+                }
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
             }
-            Text(clockFormatter.string(from: entry.date))
-                .font(.system(size: 13, weight: isHighlighted ? .semibold : .regular))
-                .foregroundStyle(isHighlighted ? Theme.accentStrong : .primary)
-                .monospacedDigit()
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(isHighlighted ? Theme.selectedRow : Color.clear)
+    }
+
+    // MARK: - Ring
+
+    private var ring: some View {
+        let window = state.activeWindow
+        let subject = state.countdownSubject
+
+        let progress: Double? = window.map { open in
+            let total = open.duration
+            guard total > 0 else { return 0 }
+            return max(0, min(1, open.remaining(at: state.now) / total))
+        }
+
+        let title: String
+        let subtitle: String
+        let clock: String
+        let symbol: String
+
+        if let window {
+            title = window.prayer.displayName
+            subtitle = compact(window.remaining(at: state.now)) + " left"
+            clock = "ends " + clockString(window.end)
+            symbol = window.prayer.symbolName
+        } else if let subject {
+            title = subject.prayer.displayName
+            subtitle = "in " + compact(subject.date.timeIntervalSince(state.now))
+            clock = clockString(subject.date)
+            symbol = subject.prayer.symbolName
+        } else {
+            title = "—"
+            subtitle = "no times"
+            clock = ""
+            symbol = "moon.stars"
+        }
+
+        return WindowRing(
+            progress: progress,
+            title: title,
+            subtitle: subtitle,
+            clock: clock,
+            symbol: symbol
         )
+        .padding(.vertical, 2)
     }
 
-    private var metadata: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            if let today = state.today {
-                metadataRow(
-                    icon: "moon.stars",
-                    text: "\(today.methodName) (\(state.settings.madhab == .hanafi ? "Hanafi" : "Standard"))"
-                )
-                metadataRow(
-                    icon: "location",
-                    text: String(format: "%.4f, %.4f · %@", state.settings.latitude, state.settings.longitude, zone.identifier)
-                )
-                metadataRow(icon: "antenna.radiowaves.left.and.right", text: today.source.label)
-                if state.settings.locationIsEstimated {
-                    HStack(alignment: .top, spacing: 6) {
-                        Image(systemName: "exclamationmark.circle")
-                            .font(.system(size: 10))
-                            .frame(width: 14)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Location estimated from your timezone.")
-                            Button("Detect my location") { state.detectLocationIfNeeded() }
-                                .buttonStyle(.link)
-                                .font(.system(size: 11))
-                        }
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                if today.usedPolarFallback {
-                    metadataRow(icon: "exclamationmark.triangle", text: "No sunrise/sunset here — mid-latitude reference used")
-                }
-            } else {
-                metadataRow(icon: "hourglass", text: "Loading times…")
-            }
-        }
-        .padding(.horizontal, 4)
-    }
+    // MARK: - Chips
 
-    private func metadataRow(icon: String, text: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 10))
-                .frame(width: 14)
-            Text(text)
-                .font(.system(size: 11))
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .foregroundStyle(.secondary)
-    }
-
-    private var menuItems: some View {
-        VStack(spacing: 1) {
-            PanelButton(title: "Settings…", systemImage: "gearshape") {
-                onOpenSettings()
-            }
-            PanelButton(title: "Refresh Times", systemImage: "arrow.clockwise") {
-                Task { await state.refresh() }
-            }
-            PanelButton(title: "Quit", systemImage: "power") {
-                NSApplication.shared.terminate(nil)
+    private var chipRow: some View {
+        HStack(spacing: 0) {
+            ForEach(Prayer.allCases, id: \.self) { prayer in
+                chip(for: prayer).frame(maxWidth: .infinity)
             }
         }
     }
-}
 
-/// A full-width menu row with a hover highlight.
-private struct PanelButton: View {
-    let title: String
-    let systemImage: String
-    let action: () -> Void
+    private func chip(for prayer: Prayer) -> some View {
+        let time = state.today?.times[prayer]
+        let isCurrent = prayer == state.activeWindow?.prayer
+        let isFocused = prayer == focus
 
-    @State private var isHovering = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 12))
-                    .frame(width: 18)
-                Text(title)
-                    .font(.system(size: 13))
-                Spacer(minLength: 0)
+        return Button {
+            selection = (selection == prayer) ? nil : prayer
+        } label: {
+            VStack(spacing: 5) {
+                Image(systemName: prayer.symbolName)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(isCurrent ? AnyShapeStyle(Palette.amber) : AnyShapeStyle(.primary))
+                    .frame(width: 32, height: 32)
+                    .glassEffect(
+                        isCurrent
+                            ? .regular.tint(Palette.amber.opacity(0.5)).interactive()
+                            : .regular.interactive(),
+                        in: Circle()
+                    )
+                Text(time.map(clockString) ?? "--:--")
+                    .font(.system(size: 10, weight: isFocused ? .semibold : .regular, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(isFocused ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(isHovering ? Theme.control : Color.clear)
-            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { isHovering = $0 }
+        .help("\(prayer.displayName): \(windowSummary(for: prayer))")
+    }
+
+    // MARK: - Detail
+
+    @ViewBuilder
+    private var detailLine: some View {
+        if let prayer = focus, let window = state.today?.window(for: prayer, nextDay: state.tomorrow) {
+            VStack(spacing: 5) {
+                Text("\(prayer.displayName) window · \(compact(window.duration))")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                Text("\(clockString(window.start))–\(clockString(window.end)) · ends at \(window.endLabel)")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.tertiary)
+                    .monospacedDigit()
+                if let necessity = window.necessityEnd {
+                    Text("Time of necessity until \(clockString(necessity))")
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .monospacedDigit()
+                }
+            }
+            .multilineTextAlignment(.center)
+        } else if let today = state.today {
+            Text(today.source.label)
+                .font(.system(size: 11, design: .rounded))
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    // MARK: - Actions
+
+    private var actionRow: some View {
+        GlassEffectContainer(spacing: 10) {
+            HStack(spacing: 10) {
+                GlassIconButton(systemImage: "gearshape.fill", help: "Settings") {
+                    onOpenSettings()
+                }
+                GlassIconButton(systemImage: "arrow.clockwise", help: "Refresh times") {
+                    Task { await state.refresh() }
+                }
+                if state.settings.locationIsEstimated {
+                    GlassIconButton(
+                        systemImage: "location.circle.fill",
+                        help: "Detect my location",
+                        tint: Palette.amber
+                    ) {
+                        state.detectLocationIfNeeded()
+                    }
+                }
+                Spacer(minLength: 0)
+                GlassIconButton(systemImage: "power", help: "Quit PrayerBar", tint: .red) {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
+            .padding(.horizontal, 2)
+        }
+    }
+
+    // MARK: - Formatting
+
+    private func clockString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.timeZone = zone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private var dayFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.timeZone = zone
+        formatter.dateFormat = "EEEE d MMMM"
+        return formatter
+    }
+
+    private func compact(_ interval: TimeInterval) -> String {
+        let minutes = Int((interval / 60).rounded())
+        if minutes <= 0 { return "now" }
+        if minutes < 60 { return "\(minutes)m" }
+        let hours = minutes / 60
+        let rest = minutes % 60
+        return rest == 0 ? "\(hours)h" : "\(hours)h \(rest)m"
+    }
+
+    private func windowSummary(for prayer: Prayer) -> String {
+        guard let window = state.today?.window(for: prayer, nextDay: state.tomorrow) else {
+            return "no window recorded"
+        }
+        return "\(clockString(window.start))–\(clockString(window.end)), ends at \(window.endLabel)"
     }
 }

@@ -1,102 +1,94 @@
 import SwiftUI
 import PrayerCore
 
-enum SettingsTab: String, CaseIterable, Identifiable {
-    case general
+/// Settings sections, shown in a sidebar.
+///
+/// Intentionally not a horizontal strip of tabs across the top: a source list is
+/// the native macOS shape for preferences and reads very differently.
+enum SettingsSection: String, CaseIterable, Identifiable {
+    case overview
     case location
     case calculation
-    case notifications
-    case focusMode
+    case reminders
+    case focus
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .general: return "General"
-        case .location: return "Location & Time"
-        case .calculation: return "Calculation"
-        case .notifications: return "Notifications"
-        case .focusMode: return "Focus Mode"
+        case .overview: return "Overview"
+        case .location: return "Place & Time"
+        case .calculation: return "Method"
+        case .reminders: return "Reminders"
+        case .focus: return "Focus"
         }
     }
 
     var symbol: String {
         switch self {
-        case .general: return "gearshape"
-        case .location: return "location.north.line"
-        case .calculation: return "clock"
-        case .notifications: return "bell"
-        case .focusMode: return "eye.slash"
+        case .overview: return "sparkles"
+        case .location: return "globe.americas.fill"
+        case .calculation: return "function"
+        case .reminders: return "bell.badge.fill"
+        case .focus: return "moon.haze.fill"
+        }
+    }
+
+    var blurb: String {
+        switch self {
+        case .overview: return "Startup, menu bar and panel behaviour."
+        case .location: return "Where you are, and which clock the times are shown on."
+        case .calculation: return "How the times are derived, and from which source."
+        case .reminders: return "When PrayerBar alerts you, per prayer."
+        case .focus: return "Cover the screen for a set period at prayer time."
         }
     }
 }
 
-/// Settings window, laid out as a custom tab strip over a scrolling body to
-/// match the reference app's appearance.
 struct SettingsView: View {
     @ObservedObject var state: AppState
-    @State private var tab: SettingsTab = .general
+    @State private var section: SettingsSection? = .overview
+
+    private var active: SettingsSection { section ?? .overview }
 
     var body: some View {
-        VStack(spacing: 0) {
-            tabStrip
-            Divider()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    switch tab {
-                    case .general: GeneralSettingsTab(state: state)
-                    case .location: LocationSettingsTab(state: state)
-                    case .calculation: CalculationSettingsTab(state: state)
-                    case .notifications: NotificationSettingsTab(state: state)
-                    case .focusMode: FocusModeSettingsTab(state: state)
+        NavigationSplitView {
+            List(SettingsSection.allCases, selection: $section) { item in
+                Label(item.title, systemImage: item.symbol)
+                    .tag(item)
+            }
+            .navigationSplitViewColumnWidth(min: 186, ideal: 200, max: 240)
+        } detail: {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(active.blurb)
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 2)
+
+                Form {
+                    switch active {
+                    case .overview: OverviewSection(state: state)
+                    case .location: PlaceSection(state: state)
+                    case .calculation: MethodSection(state: state)
+                    case .reminders: ReminderSection(state: state)
+                    case .focus: FocusSection(state: state)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .formStyle(.grouped)
             }
+            .navigationTitle(active.title)
         }
-        .frame(width: 580, height: 640)
+        .tint(Palette.accent)
+        .frame(width: 780, height: 580)
         .onAppear {
-            // An accessory (menu bar) app has to be brought forward explicitly
-            // for its settings window to become usable.
             NSApp.activate(ignoringOtherApps: true)
         }
     }
-
-    private var tabStrip: some View {
-        HStack(spacing: 4) {
-            ForEach(SettingsTab.allCases) { item in
-                let isSelected = item == tab
-                Button {
-                    tab = item
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: item.symbol)
-                            .font(.system(size: 18, weight: .regular))
-                        Text(item.title)
-                            .font(.system(size: 11))
-                            .lineLimit(1)
-                    }
-                    .foregroundStyle(isSelected ? Theme.accent : Color.secondary)
-                    .frame(width: 104, height: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(isSelected ? Color.primary.opacity(0.06) : Color.clear)
-                    )
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity)
-    }
 }
 
-// MARK: - Shared binding helpers
+// MARK: - Binding helpers
 
 extension AppState {
     /// Two-way binding into a nested settings field.
@@ -133,6 +125,19 @@ extension AppState {
                 var reminder = self.settings.reminder(for: prayer)
                 reminder.mode = value
                 self.settings.perPrayer[prayer.rawValue] = reminder
+            }
+        )
+    }
+
+    /// Editing a coordinate by hand makes it the user's own choice, so the
+    /// "estimated from your timezone" caveat no longer applies.
+    func userCoordinateBinding(_ keyPath: WritableKeyPath<AppSettings, Double>) -> Binding<Double> {
+        Binding(
+            get: { self.settings[keyPath: keyPath] },
+            set: { value in
+                self.settings[keyPath: keyPath] = value
+                self.settings.locationIsEstimated = false
+                self.settings.locationMode = .manual
             }
         )
     }

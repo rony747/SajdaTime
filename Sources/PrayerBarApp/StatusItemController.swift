@@ -121,38 +121,48 @@ final class StatusItemController: NSObject {
 
         // `minY` asks AppKit to hang the panel below the bar. Verify it actually
         // did, and push it down if the menu bar would cover the top.
-        keepBelowMenuBar()
+        keepBelowStatusItem()
 
         logGeometry()
     }
 
-    /// Report where the panel ended up relative to the usable screen area. The
-    /// visible frame already excludes the menu bar, so the panel's top must not
-    /// exceed it.
+    /// Report where the panel ended up relative to the status item it hangs from.
+    /// A negative gap means the panel's top is below the item, which is correct.
     private func logGeometry() {
         guard ProcessInfo.processInfo.environment["PRAYERBAR_DEBUG"] == "1",
               let window = popover.contentViewController?.view.window,
               let screen = window.screen ?? NSScreen.main else { return }
-        let overflow = window.frame.maxY - screen.visibleFrame.maxY
         let preferred = popover.contentViewController?.preferredContentSize ?? .zero
         let contentHeight = window.contentRect(forFrameRect: window.frame).height
-        NSLog("PrayerBar: popover frame=\(window.frame) visibleFrame=\(screen.visibleFrame) overflowAboveMenuBar=\(overflow) shown=\(popover.isShown) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1)")
+
+        // Compare against the status item itself rather than the screen, because
+        // `visibleFrame` does not always exclude the menu bar.
+        var buttonBottom = "?"
+        var gap = "?"
+        if let button = statusItem.button, let buttonWindow = button.window {
+            let onScreen = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
+            buttonBottom = String(format: "%.1f", onScreen.minY)
+            gap = String(format: "%.1f", window.frame.maxY - onScreen.minY)
+        }
+        NSLog("PrayerBar: popoverTop=\(String(format: "%.1f", window.frame.maxY)) statusItemBottom=\(buttonBottom) gapAboveStatusItem=\(gap) frame=\(window.frame) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1)")
     }
 
-    /// Make sure the panel sits entirely below the menu bar.
+    /// Make sure the panel hangs below the status item rather than rising into
+    /// the menu bar.
     ///
-    /// AppKit normally handles this, but an accessory app with a transient
-    /// popover can end up tucked under the bar, cropping the top of the panel.
-    private func keepBelowMenuBar() {
-        guard let window = popover.contentViewController?.view.window,
-              let screen = window.screen ?? NSScreen.main else { return }
+    /// The reference point is the status item itself, not `NSScreen.visibleFrame`:
+    /// on a multi-display setup `visibleFrame` does not reliably exclude the menu
+    /// bar, which made an earlier version of this guard a no-op.
+    private func keepBelowStatusItem() {
+        guard let button = statusItem.button,
+              let buttonWindow = button.window,
+              let window = popover.contentViewController?.view.window else { return }
 
-        // The visible frame already excludes the menu bar.
-        let limit = screen.visibleFrame.maxY
+        let anchorBottom = buttonWindow
+            .convertToScreen(button.convert(button.bounds, to: nil)).minY
         var frame = window.frame
-        if frame.maxY > limit {
-            let overflow = frame.maxY - limit
-            frame.origin.y -= overflow
+        if frame.maxY > anchorBottom {
+            frame.origin.y -= (frame.maxY - anchorBottom)
             window.setFrame(frame, display: true)
         }
     }

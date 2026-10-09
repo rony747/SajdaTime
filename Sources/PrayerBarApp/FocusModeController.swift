@@ -180,13 +180,13 @@ private struct FocusOverlayView: View {
                 if let prayer {
                     Image(systemName: prayer.symbolName)
                         .font(.system(size: 56, weight: .light))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.amber)
                     Text("It's time for \(prayer.displayName)")
                         .font(.system(size: 40, weight: .semibold, design: .rounded))
                 } else {
                     Image(systemName: "eye")
                         .font(.system(size: 56, weight: .light))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Palette.mint)
                     Text("Focus Mode preview")
                         .font(.system(size: 40, weight: .semibold, design: .rounded))
                 }
@@ -200,6 +200,8 @@ private struct FocusOverlayView: View {
                     .foregroundStyle(.tertiary)
                     .padding(.top, 6)
             }
+            .padding(48)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 36, style: .continuous))
             .opacity(appeared ? 1 : 0)
             .scaleEffect(appeared ? 1 : 0.97)
         }

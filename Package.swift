@@ -6,7 +6,7 @@ import PackageDescription
 // funnels all UI state through @MainActor observable objects).
 let package = Package(
     name: "PrayerBar",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS("26.0")],
     products: [
         .library(name: "PrayerCore", targets: ["PrayerCore"]),
         .executable(name: "PrayerBar", targets: ["PrayerBarApp"]),

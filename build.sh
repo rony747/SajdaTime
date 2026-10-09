@@ -40,7 +40,7 @@ mkdir -p "$CLANG_MODULE_CACHE_PATH"
 # -disable-sandbox is required: swiftc wraps macro plugin servers in
 # sandbox-exec, and a nested sandbox cannot be applied from inside this one.
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
-TARGET="arm64-apple-macosx14.0"
+TARGET="arm64-apple-macosx26.0"
 
 echo "==> Building PrayerCore ($CONFIG)"
 swiftc -disable-sandbox -parse-as-library "${OPT[@]}" -target "$TARGET" -sdk "$SDK" \
