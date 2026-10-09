@@ -255,6 +255,7 @@ struct PrayerTimesSection: View {
 
 struct NotificationsSection: View {
     @ObservedObject var state: AppState
+    @State private var previewPrayer: Prayer = .asr
 
     var body: some View {
         SettingsCard(title: "Alerts", symbol: "bell.fill") {
@@ -313,11 +314,23 @@ struct NotificationsSection: View {
                     }
                 }
             }
-            HStack {
+            HStack(spacing: 10) {
                 CardButton(title: "Send a sample notification", systemImage: "bell.badge") {
                     Task { await state.notifications.sendSample() }
                 }
                 Spacer()
+            }
+            CardRow("Test the full-screen reminder", subtitle: "Shows it straight away, with that prayer's backdrop.") {
+                HStack(spacing: 8) {
+                    GreenPicker(
+                        options: Prayer.obligatory.map { ($0, $0.displayName) },
+                        selection: $previewPrayer,
+                        width: 130
+                    )
+                    CardButton(title: "Preview", systemImage: "play.rectangle.fill") {
+                        state.previewAlert(for: previewPrayer)
+                    }
+                }
             }
             if let error = state.notifications.lastError {
                 StatusLine(text: error, kind: .error)

@@ -278,6 +278,24 @@ the merit of salah, and Dismiss / Snooze / Mute-Adhan-Today.
 Focus Mode and the reminder do not stack: while the reminder is up, the focus
 overlay is suppressed for that prayer.
 
+### Testing it
+
+Easiest is **Notifications › Test the full-screen reminder**: pick a prayer and
+press Preview. Each prayer has its own backdrop, so pick a few to see them all.
+
+From a terminal, with the app quit:
+
+```bash
+open --env SAJDA_TEST_ALERT=isha "/Applications/Sajda Time.app"
+```
+
+To exercise the real timed path rather than the view alone, set **Prayer Times ›
+Time source** to *Manual (fixed)* and enter a time about a minute ahead; the
+reminder fires through the same code as a normal prayer.
+
+With `SAJDA_DEBUG=1` the app logs `reminder shown for <prayer>, quote=<id>,
+backdrop=<name>` when it appears.
+
 ### Sourcing note
 
 The ahadith and their references come from
