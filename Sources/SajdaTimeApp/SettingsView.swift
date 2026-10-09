@@ -27,16 +27,26 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Outlined throughout, at a single weight.
+    ///
+    /// The set used to mix the two: every row was a `.fill` glyph except
+    /// Menubar, which has no filled variant (`menubar.rectangle.fill` does not
+    /// exist, and the near-misses `rectangle.topthird.inset.filled` and
+    /// `rectangle.inset.filled` are both hollow at 14pt). One outlined glyph
+    /// among solid ones read as a mistake. Since the odd one out cannot be
+    /// filled, the set is outlined instead — every symbol then carries the same
+    /// stroke weight, and Menubar keeps its proper glyph. Selection is carried
+    /// by the tinted pill, the weight of the label and the accent colour.
     var symbol: String {
         switch self {
-        case .general: return "gearshape.fill"
-        case .prayerTimes: return "clock.fill"
-        case .notifications: return "bell.fill"
-        case .location: return "mappin.circle.fill"
-        case .appearance: return "paintpalette.fill"
+        case .general: return "square.grid.2x2"
+        case .prayerTimes: return "clock"
+        case .notifications: return "bell"
+        case .location: return "location"
+        case .appearance: return "paintpalette"
         case .menubar: return "menubar.rectangle"
-        case .focus: return "moon.haze.fill"
-        case .about: return "info.circle.fill"
+        case .focus: return "moon.haze"
+        case .about: return "info.circle"
         }
     }
 
@@ -161,10 +171,14 @@ struct SettingsSidebar: View {
         return Button {
             onSelect(item)
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: 11) {
                 Image(systemName: item.symbol)
-                    .font(.system(size: 13))
-                    .frame(width: 20)
+                    // A touch larger and a step heavier, so the glyphs hold
+                    // their own beside 13pt labels instead of looking thin.
+                    .font(.system(size: 14, weight: .medium))
+                    // Fixed width keeps every label on the same left edge; SF
+                    // Symbols vary in width quite a lot.
+                    .frame(width: 22)
                     .foregroundStyle(selected ? Palette.accentText(scheme) : Color.secondary)
                 Text(item.title)
                     .font(.system(size: 13, weight: selected ? .semibold : .regular))

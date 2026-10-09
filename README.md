@@ -318,6 +318,19 @@ one of the two pages suggested. [sunnah.com](https://sunnah.com/bukhari/8) could
 not be used: it answers automated requests with HTTP 403 behind a Cloudflare
 challenge, so nothing here was taken from it or checked against it.
 
+## The settings sidebar
+
+The section icons are outlined throughout, at a single weight and a fixed 22pt
+column so every label starts on the same edge. Selection is carried by the tinted
+pill, the label's weight and the accent colour rather than by the glyph.
+
+They used to be a mix: every row was a `.fill` symbol except Menubar, which was
+outlined — because there is no filled menubar symbol. `menubar.rectangle.fill`
+does not exist, and both near-misses (`rectangle.topthird.inset.filled` and
+`rectangle.inset.filled`) are hollow at 14pt, so one outlined glyph sat among
+solid ones and read as a mistake. Rather than force a wrong symbol, the set is
+outlined, which makes every stroke match and keeps Menubar's proper glyph.
+
 ## The menu bar panel
 
 The row of glass pills that used to sit under the prayer list (Calendar,
