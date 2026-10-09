@@ -47,7 +47,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         state.$settings
             .map(\.appearance)
             .removeDuplicates()
-            .sink { AppearanceController.apply($0) }
+            .sink { [weak self] appearance in
+                AppearanceController.apply(appearance)
+                // The popover does not inherit this from NSApp, so it is set too.
+                self?.statusItem?.applyAppearance(appearance)
+            }
             .store(in: &cancellables)
 
         // Offscreen render mode, used to inspect the interface without a screen.
@@ -57,6 +61,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 NSApp.terminate(nil)
             }
             return
+        }
+
+        // Development aid: cycle the appearance after launch so the live update
+        // path can be observed without driving the UI by hand.
+        if ProcessInfo.processInfo.environment["SAJDA_CYCLE_APPEARANCE"] == "1" {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2))
+                state.settings.appearance = .dark
+                try? await Task.sleep(for: .seconds(3))
+                state.settings.appearance = .light
+            }
         }
 
         if ProcessInfo.processInfo.environment["SAJDA_OPEN_SETTINGS"] == "1" {

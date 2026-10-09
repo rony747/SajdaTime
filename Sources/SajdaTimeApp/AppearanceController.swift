@@ -7,14 +7,16 @@ import SajdaCore
 /// light/dark override is consistent across all of them.
 enum AppearanceController {
 
-    static func apply(_ appearance: AppAppearance) {
+    /// The matching `NSAppearance`, or nil to follow the system.
+    static func nsAppearance(for appearance: AppAppearance) -> NSAppearance? {
         switch appearance {
-        case .system:
-            NSApp.appearance = nil
-        case .light:
-            NSApp.appearance = NSAppearance(named: .aqua)
-        case .dark:
-            NSApp.appearance = NSAppearance(named: .darkAqua)
+        case .system: return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark: return NSAppearance(named: .darkAqua)
         }
+    }
+
+    static func apply(_ appearance: AppAppearance) {
+        NSApp.appearance = nsAppearance(for: appearance)
     }
 }

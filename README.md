@@ -165,6 +165,19 @@ views: `SAJDA_RENDER=<dir>` writes the panel and every settings page, in light
 and dark, to PNGs and exits. This is how the artwork-over-text bug and the
 washed-out card were found.
 
+Development hooks, all environment-gated:
+
+| variable | effect |
+| --- | --- |
+| `SAJDA_RENDER=<dir>` | render every view to PNGs and exit |
+| `SAJDA_OPEN_POPOVER=1` | open the panel at launch |
+| `SAJDA_OPEN_SETTINGS=1` | open settings at launch |
+| `SAJDA_CYCLE_APPEARANCE=1` | cycle dark then light after launch |
+| `SAJDA_DEBUG=1` | log popover geometry, appearance and the menu bar label |
+
+`sajdactl seed-appearance <system\|light\|dark>` writes the preference directly
+into the app's domain so a specific theme can be exercised.
+
 Two limits worth knowing:
 
 - `ImageRenderer` does not draw materials, so these renders verify **layout**,
@@ -174,9 +187,17 @@ Two limits worth knowing:
 
 ## Appearance
 
-`Appearance › Theme` switches between **System**, **Light** and **Dark**. The
-preference is applied to `NSApp.appearance`, so it covers the panel and the
-settings window together rather than per view.
+`Appearance › Theme` switches between **System**, **Light** and **Dark**.
+
+It is applied in two places, on purpose. `NSApp.appearance` covers the settings
+window, but it does **not** reliably reach the popover's own window, so the menu
+bar panel kept its previous look until the app restarted. `StatusItemController`
+therefore sets `popover.appearance` and the hosting view's appearance as well,
+and re-applies both whenever the preference changes — so an open panel follows a
+theme change immediately.
+
+With **System**, the popover is left to AppKit (nil appearance), which tracks the
+macOS setting live.
 
 Three things had to change for dark mode to be readable:
 

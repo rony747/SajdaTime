@@ -58,7 +58,29 @@ final class StatusItemController: NSObject {
             }
             .store(in: &cancellables)
 
+        applyAppearance(state.settings.appearance)
         update()
+    }
+
+    /// Apply the appearance preference to the popover.
+    ///
+    /// `NSApp.appearance` does not reliably reach the popover's own window, so
+    /// the panel kept its previous look until the app was restarted. Setting it
+    /// on the popover and on the hosting view makes the panel follow theme
+    /// changes immediately.
+    func applyAppearance(_ appearance: AppAppearance) {
+        let resolved = AppearanceController.nsAppearance(for: appearance)
+        popover.appearance = resolved
+        popover.contentViewController?.view.appearance = resolved
+
+        guard ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1" else { return }
+        let requested = appearance.rawValue
+        // The view only reports its new effective appearance after it has been
+        // laid out again, so confirm on the next run loop turn.
+        DispatchQueue.main.async { [weak self] in
+            let effective = self?.popover.contentViewController?.view.effectiveAppearance.name.rawValue ?? "?"
+            NSLog("Sajda Time: popover appearance — requested=\(requested) effective=\(effective) shown=\(self?.popover.isShown ?? false)")
+        }
     }
 
     /// Push the current label into the status bar.
@@ -143,7 +165,8 @@ final class StatusItemController: NSObject {
             buttonBottom = String(format: "%.1f", onScreen.minY)
             gap = String(format: "%.1f", window.frame.maxY - onScreen.minY)
         }
-        NSLog("Sajda Time: popoverTop=\(String(format: "%.1f", window.frame.maxY)) statusItemBottom=\(buttonBottom) gapAboveStatusItem=\(gap) frame=\(window.frame) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1)")
+        let effective = popover.contentViewController?.view.effectiveAppearance.name.rawValue ?? "?"
+        NSLog("Sajda Time: popoverTop=\(String(format: "%.1f", window.frame.maxY)) statusItemBottom=\(buttonBottom) gapAboveStatusItem=\(gap) frame=\(window.frame) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1) panelAppearance=\(effective)")
     }
 
     /// Make sure the panel hangs below the status item rather than rising into
