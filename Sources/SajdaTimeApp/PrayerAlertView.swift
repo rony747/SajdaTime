@@ -60,8 +60,6 @@ struct PrayerAlertView: View {
                     endRadius: 820
                 )
             }
-            // The artwork is a base the content sits on, not a row in the flow.
-            .overlay(alignment: .bottom) { artwork }
             .overlay(alignment: .top) { header }
             .overlay { centredContent }
             .clipped()
@@ -92,6 +90,9 @@ struct PrayerAlertView: View {
         .padding(.horizontal, 56)
         .frame(maxWidth: 1000)
         .frame(maxHeight: .infinity)
+        // On the column, not on `titleBlock`: applying it there left the hadith
+        // and the reference left-aligned inside their card.
+        .multilineTextAlignment(.center)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 14)
     }
@@ -141,16 +142,6 @@ struct PrayerAlertView: View {
                     .foregroundStyle(Palette.greenInk.opacity(0.75))
             }
             Spacer()
-            HStack(spacing: 7) {
-                Image(systemName: "bell.fill").font(.system(size: 12))
-                Text("Prayer Reminder")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-            }
-            .foregroundStyle(Palette.greenInk)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 9)
-            .background(Capsule().fill(.white.opacity(0.8)))
-            .overlay(Capsule().strokeBorder(.white.opacity(0.95)))
         }
         .foregroundStyle(Palette.greenInk)
         // The header lands on bright cloud in several of the backdrops.
@@ -178,7 +169,6 @@ struct PrayerAlertView: View {
                 .tracking(0.2)
                 .foregroundStyle(Palette.greenInk.opacity(0.72))
         }
-        .multilineTextAlignment(.center)
     }
 
     private var timeChip: some View {
@@ -237,9 +227,10 @@ struct PrayerAlertView: View {
                 )
 
             Text(quote.displayText)
-                .font(.system(size: 27, weight: .regular, design: .serif))
-                .tracking(0.1)
-                .lineSpacing(11)
+                .font(.system(size: 28, weight: .regular, design: .serif))
+                .italic()
+                .tracking(0.2)
+                .lineSpacing(12)
                 .foregroundStyle(Palette.greenInk)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -267,40 +258,6 @@ struct PrayerAlertView: View {
     }
 
     // MARK: - Foot
-
-    /// The artwork spans the foot of the screen with the buttons sitting on it,
-    /// as in the design.
-    private var artwork: some View {
-        BannerArt(mode: .fill)
-                .frame(maxWidth: .infinity)
-                .frame(height: 345)
-                .clipped()
-                // Feathered so the artwork blends into the photograph rather than
-                // reading as a rectangle laid over it.
-                .mask(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: 0.0),
-                            .init(color: .black, location: 0.44),
-                            .init(color: .black, location: 1.0),
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
-                .mask(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: 0.0),
-                            .init(color: .black, location: 0.18),
-                            .init(color: .black, location: 0.82),
-                            .init(color: .clear, location: 1.0),
-                        ],
-                        startPoint: .leading, endPoint: .trailing
-                    )
-                )
-                .allowsHitTesting(false)
-                .frame(height: 345)
-    }
 
     private var actions: some View {
         VStack(spacing: 16) {

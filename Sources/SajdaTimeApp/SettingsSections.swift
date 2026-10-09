@@ -76,16 +76,16 @@ struct SummaryCard: View {
                     HStack(spacing: 6) {
                         Image(systemName: "mappin.and.ellipse").font(.system(size: 13, weight: .medium))
                         Text(state.settings.locationName.isEmpty ? "Unknown place" : state.settings.locationName)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
                         Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
                     Text(TimeFormatting.longDate(state.now, timeZone: state.settings.displayTimeZone))
-                        .font(.system(size: 11.5, design: .rounded))
+                        .font(.system(size: 11, design: .rounded))
                         .foregroundStyle(.secondary)
                     if state.settings.showHijriDate, let hijri = state.today?.hijri {
                         Text(hijri.formatted)
-                            .font(.system(size: 11.5, design: .rounded))
+                            .font(.system(size: 11, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -94,26 +94,27 @@ struct SummaryCard: View {
                 if let subject = state.countdownSubject {
                     VStack(alignment: .trailing, spacing: 1) {
                         Text("Next Prayer")
-                            .font(.system(size: 10.5, design: .rounded))
+                            .font(.system(size: 10, design: .rounded))
                             .foregroundStyle(.secondary)
                         Text(subject.prayer.displayName)
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
                         Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(Palette.greenInk)
                             .monospacedDigit()
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
+            .padding(.horizontal, 15)
+            .padding(.top, 12)
+            .padding(.bottom, 9)
 
-            // Full-width band, so the illustration reads as a background rather
-            // than a picture centred in the card.
+            // Full-width band. Kept here, unlike the panel's card, because this
+            // one is twice as wide and has room for the illustration to read; 48
+            // still shows the mosque and the hills rather than a slice of sky.
             BannerArt()
                 .frame(maxWidth: .infinity)
-                .frame(height: 120)
+                .frame(height: 48)
                 .clipped()
         }
         .background(Palette.bannerGradient)

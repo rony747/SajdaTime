@@ -28,7 +28,7 @@ enum PreviewRenderer {
                 write(
                     PrayerAlertView(
                         prayer: prayer,
-                        time: state.now,
+                        time: state.today?.times[prayer] ?? state.now,
                         place: state.settings.locationName,
                         hijri: state.today?.hijri?.formatted,
                         settings: state.settings,
@@ -48,7 +48,7 @@ enum PreviewRenderer {
                 write(
                     PrayerAlertView(
                         prayer: prayer,
-                        time: state.now,
+                        time: state.today?.times[prayer] ?? state.now,
                         place: state.settings.locationName,
                         hijri: state.today?.hijri?.formatted,
                         settings: state.settings,
