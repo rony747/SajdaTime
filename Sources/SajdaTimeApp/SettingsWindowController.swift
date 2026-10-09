@@ -39,7 +39,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             guard let self, let window = self.window else { return }
             if !window.isKeyWindow { window.makeKey() }
             if ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1" {
-                NSLog("Sajda Time: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) backdrop=\(self.window?.contentView is NSVisualEffectView) appearance=\(NSApp.appearance?.name.rawValue ?? "system") frame=\(window.frame)")
+                // The band the user saw was the gap between the hosting view and
+                // the window, so log both rather than the frame alone.
+                let content = window.contentView?.bounds ?? .zero
+                let host = (window.contentView?.subviews.first)?.frame ?? .zero
+                NSLog("Sajda Time: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) backdrop=\(self.window?.contentView is NSVisualEffectView) appearance=\(NSApp.appearance?.name.rawValue ?? "system") frame=\(window.frame) content=\(content.size) host=\(host.size)")
             }
         }
     }

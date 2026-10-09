@@ -80,10 +80,12 @@ struct SettingsView: View {
 
     var body: some View {
         SettingsChrome(state: state, section: section, onSelect: { section = $0 })
-        .frame(width: 880, height: 640)
-        // The window is a full-size content view, so SwiftUI insets the top by
-        // the titlebar height on top of our own padding, which left a large gap
-        // above the heading. The sidebar carries its own clearance instead.
+        // No fixed frame here. A titled window under `.fullSizeContentView` has a
+        // content view as tall as the frame *including* the titlebar — 672 for a
+        // 640 content rect — so pinning this to 640 left a 32pt band at the
+        // bottom showing the bare backdrop, which reads as a darker strip than
+        // the scrimmed content above it. Filling the window removes the band; the
+        // offscreen renderer sets its own frame.
         .ignoresSafeArea(.container, edges: .top)
         // Glass alone let the desktop through far too strongly, which hurt
         // contrast in dark mode. The scrim is deliberately asymmetric: dark mode

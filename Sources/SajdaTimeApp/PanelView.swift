@@ -299,17 +299,17 @@ struct PanelView: View {
                 caption: "Calculation Method",
                 value: state.today?.methodName ?? state.settings.method.name
             )
-            Divider().frame(height: 30)
+            Divider().frame(height: 32).padding(.horizontal, 12)
             footerItem(
                 symbol: "book.closed.fill",
                 caption: "Madhab",
                 value: state.settings.madhab == .hanafi ? "Hanafi" : "Shafi'i"
             )
         }
-        .padding(.vertical, 9)
-        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .fill(Color.primary.opacity(0.05))
         )
     }
