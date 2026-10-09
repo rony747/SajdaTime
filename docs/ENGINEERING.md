@@ -35,7 +35,7 @@ It prints its progress and finishes with the two artefacts:
 ==> Building sajdactl
 ==> Building SajdaTime app binary
 ==> Assembling app bundle
-    version: 2.8.2 (build 20)
+    version: 1.0.0 (build N)
     icon: AppIcon.icns generated
     signed (ad-hoc)
 
@@ -90,8 +90,8 @@ machines as-is; that needs your own signing certificate.
 
 `./VERSION` is the single source of truth. The script stamps it into the bundle
 at build time, so the app cannot report a version that differs from the release —
-which it had: About reported `1.0.0` through several tagged releases because the
-plist was being bumped by hand and had been missed. `Resources/Info.plist` now
+which it had: About reported `1.0.0` through what were then several releases
+because the plist was being bumped by hand and had been missed. `Resources/Info.plist` now
 holds a placeholder on purpose.
 
 ### Why `build.sh` instead of `swift build`

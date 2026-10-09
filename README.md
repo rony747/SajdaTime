@@ -86,7 +86,7 @@ cd SajdaTime
 ==> Building sajdactl
 ==> Building SajdaTime app binary
 ==> Assembling app bundle
-    version: 2.9.0 (build N)
+    version: 1.0.0 (build N)
     icon: AppIcon.icns generated
     signed (ad-hoc)
 

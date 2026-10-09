@@ -67,8 +67,8 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 # The version lives in ./VERSION and is stamped in here, so the bundle cannot
-# drift from the release the way it did: About was reporting 1.0.0 through
-# several tagged releases because the plist was never bumped by hand.
+# drift from the release the way it did: About once reported a stale version
+# through several releases because the plist was never bumped by hand.
 VERSION="$(cat VERSION 2>/dev/null || echo 0.0.0)"
 BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist" >/dev/null
