@@ -114,10 +114,17 @@ Built on Liquid Glass, in green with a warm amber for the sun prayers:
   next-prayer banner over a drawn skyline, one row per prayer (the open window
   tinted green with a live countdown pill), four action tiles, and a footer
   showing the calculation method and madhab.
-- **Qibla and Calendar** are real pages, not decoration. The qibla page shows a
-  bearing from true north — Macs have no magnetometer, so a needle driven by
-  device heading would be fiction — and the calendar page shows the month with
-  Umm al-Qura day numbers alongside the Gregorian ones.
+- **Calendar** is a real page, not decoration: the month with Umm al-Qura day
+  numbers alongside the Gregorian ones.
+- **Qibla is hidden unless the machine has a magnetometer.** Macs do not —
+  `CLLocationManager.headingAvailable` is false — so a compass could not know
+  which way it was pointing. Where a heading *is* available the page behaves like
+  a physical compass: the bezel turns so its north marks true north, a marker
+  sits on the bezel at the Qibla bearing, and a fixed pointer at the top shows
+  the direction you face, with a turn instruction.
+
+  The earlier version never rotated the bezel at all and drew the needle against
+  a fixed dial, which is why the direction read wrong.
 - **Settings** — sidebar with the app identity, and cards with icon headers.
 
 ## Prayer windows, start to end
@@ -174,6 +181,7 @@ Development hooks, all environment-gated:
 | `SAJDA_OPEN_SETTINGS=1` | open settings at launch |
 | `SAJDA_CYCLE_APPEARANCE=1` | cycle dark then light after launch |
 | `SAJDA_DEBUG=1` | log popover geometry, appearance and the menu bar label |
+| `SAJDA_FAKE_HEADING=<deg>` | pretend a magnetometer exists at a fixed heading |
 
 `sajdactl seed-appearance <system\|light\|dark>` writes the preference directly
 into the app's domain so a specific theme can be exercised.

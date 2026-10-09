@@ -1,17 +1,27 @@
 import SwiftUI
 import SajdaCore
 
-/// Qibla direction for the configured location.
+/// Qibla compass.
 ///
-/// Shows a bearing from true north rather than a live compass: Macs have no
-/// magnetometer, so a needle driven by device heading would be fiction.
+/// Behaves like a physical compass: the bezel turns so its north marks true
+/// north, a marker sits on the bezel at the Qibla bearing, and a fixed pointer
+/// at the top shows the direction the device is facing. Only reachable on a
+/// machine that reports a real heading — see `HeadingService`.
 struct QiblaView: View {
     let coordinate: Coordinate
     let placeName: String
+    /// Degrees clockwise from true north that the device is facing.
+    let heading: Double
     let onBack: () -> Void
 
     private var bearing: Double { Qibla.bearing(from: coordinate) }
     private var distance: Double { Qibla.distance(from: coordinate) }
+
+    /// Degrees the user must still turn to face the Qibla.
+    private var offset: Double {
+        let delta = (bearing - heading).truncatingRemainder(dividingBy: 360)
+        return delta < 0 ? delta + 360 : delta
+    }
 
     private let cardinals: [(label: String, x: CGFloat, y: CGFloat)] = [
         ("N", 0, -58), ("E", 58, 0), ("S", 0, 58), ("W", -58, 0),
@@ -30,54 +40,71 @@ struct QiblaView: View {
                     .fill(Color.primary.opacity(0.05))
                     .frame(width: 168, height: 168)
 
-                ForEach(0..<72, id: \.self) { tick in
-                    Capsule()
-                        .fill(Color.primary.opacity(tick % 18 == 0 ? 0.32 : 0.12))
-                        .frame(width: tick % 18 == 0 ? 2 : 1, height: tick % 18 == 0 ? 9 : 5)
-                        .offset(y: -76)
-                        .rotationEffect(.degrees(Double(tick) * 5))
-                }
+                // Fixed pointer: the direction the device is facing.
+                Image(systemName: "triangle.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .offset(y: -86)
 
-                ForEach(cardinals.indices, id: \.self) { index in
-                    let cardinal = cardinals[index]
-                    Text(cardinal.label)
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
-                        .foregroundStyle(cardinal.label == "N" ? Palette.green : Color.secondary)
-                        .offset(x: cardinal.x, y: cardinal.y)
-                }
-
-                // Needle, rotated about the dial centre to the computed bearing.
+                // Rotating bezel. Turning it by -heading puts the bezel's north
+                // on true north, and carries the Qibla marker with it.
                 ZStack {
-                    Rectangle()
-                        .fill(Palette.green)
-                        .frame(width: 3, height: 52)
-                        .offset(y: -26)
-                    Image(systemName: "location.north.fill")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(Palette.green)
-                        .offset(y: -60)
+                    ForEach(0..<72, id: \.self) { tick in
+                        Capsule()
+                            .fill(Color.primary.opacity(tick % 18 == 0 ? 0.32 : 0.12))
+                            .frame(width: tick % 18 == 0 ? 2 : 1, height: tick % 18 == 0 ? 9 : 5)
+                            .offset(y: -76)
+                            .rotationEffect(.degrees(Double(tick) * 5))
+                    }
+
+                    ForEach(cardinals.indices, id: \.self) { index in
+                        let cardinal = cardinals[index]
+                        Text(cardinal.label)
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundStyle(cardinal.label == "N" ? Palette.green : Color.secondary)
+                            .offset(x: cardinal.x, y: cardinal.y)
+                    }
+
+                    // Qibla marker, fixed to the bezel at the bearing.
+                    VStack(spacing: 1) {
+                        Image(systemName: "location.north.fill")
+                            .font(.system(size: 20, weight: .bold))
+                        Text("Qibla")
+                            .font(.system(size: 8, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(Palette.green)
+                    .offset(y: -46)
+                    .rotationEffect(.degrees(bearing))
                 }
-                .rotationEffect(.degrees(bearing))
+                .rotationEffect(.degrees(-heading))
+                .animation(.spring(duration: 0.25), value: heading)
 
                 Circle()
-                    .fill(Palette.green)
-                    .frame(width: 9, height: 9)
+                    .fill(Color.primary.opacity(0.35))
+                    .frame(width: 7, height: 7)
             }
-            .frame(height: 176)
+            .frame(height: 190)
 
             VStack(spacing: 3) {
                 Text(String(format: "%.1f° %@", bearing, Qibla.compassPoint(for: bearing)))
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                Text(String(format: "%.0f km to the Kaaba", distance))
-                    .font(.system(size: 11.5, design: .rounded))
+                Text(turnInstruction)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(Palette.green)
+                Text(String(format: "%.0f km to the Kaaba · facing %.0f°", distance, heading))
+                    .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.secondary)
-                Text("Measured from true north, not magnetic north.")
-                    .font(.system(size: 10, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
+                    .monospacedDigit()
             }
         }
+    }
+
+    private var turnInstruction: String {
+        if offset < 4 || offset > 356 { return "You are facing the Qibla" }
+        return offset < 180
+            ? String(format: "Turn %.0f° right", offset)
+            : String(format: "Turn %.0f° left", 360 - offset)
     }
 }
 

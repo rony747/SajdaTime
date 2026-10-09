@@ -35,7 +35,8 @@ struct PanelView: View {
                 footer
             case .qibla:
                 QiblaView(coordinate: state.settings.coordinate,
-                          placeName: state.settings.locationName) { page = .main }
+                          placeName: state.settings.locationName,
+                          heading: state.heading.heading) { page = .main }
             case .month:
                 MonthView(state: state) { page = .main }
             }
@@ -243,7 +244,11 @@ struct PanelView: View {
         // the 8pt gap between the tiles or they merge into one glass shape.
         GlassEffectContainer(spacing: 4) {
             HStack(spacing: 8) {
-            tile("location.north.circle.fill", "Qibla", Palette.green) { page = .qibla }
+            // Hidden on a machine with no magnetometer: a compass that cannot
+            // know which way it is pointing would be decoration, not a tool.
+            if state.heading.isAvailable {
+                tile("location.north.circle.fill", "Qibla", Palette.green) { page = .qibla }
+            }
             tile("calendar", "Calendar", .primary) { page = .month }
             tile("gearshape.fill", "Settings", .primary) { onOpenSettings(.general) }
                 tile("bell.fill", "Reminders", Palette.amber) { onOpenSettings(.notifications) }

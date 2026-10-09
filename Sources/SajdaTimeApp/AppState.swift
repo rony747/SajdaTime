@@ -32,6 +32,7 @@ final class AppState: ObservableObject {
     let notifications = NotificationService()
     let focusMode = FocusModeController()
     let location = LocationService()
+    let heading = HeadingService()
     private var cancellables: Set<AnyCancellable> = []
 
     private let store: PrayerTimesStore

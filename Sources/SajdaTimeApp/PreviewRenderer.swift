@@ -22,6 +22,24 @@ enum PreviewRenderer {
                 to: directory, name: "panel-\(label)"
             )
 
+            // The compass at known headings, so the bezel rotation and the
+            // marker placement can be checked against the expected angles.
+            for heading in [0.0, 90.0, 180.0, 270.0] {
+                write(
+                    QiblaView(
+                        coordinate: state.settings.coordinate,
+                        placeName: state.settings.locationName,
+                        heading: heading,
+                        onBack: {}
+                    )
+                    .padding(14)
+                    .frame(width: PanelView.preferredWidth)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                    .environment(\.colorScheme, scheme),
+                    to: directory, name: "qibla-\(label)-heading\(Int(heading))"
+                )
+            }
+
             for section in SettingsSection.allCases {
                 // The real sidebar and detail, minus the ScrollView that cannot
                 // be captured offscreen.
