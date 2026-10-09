@@ -143,7 +143,7 @@ final class StatusItemController: NSObject {
             buttonBottom = String(format: "%.1f", onScreen.minY)
             gap = String(format: "%.1f", window.frame.maxY - onScreen.minY)
         }
-        NSLog("SajdaTime: popoverTop=\(String(format: "%.1f", window.frame.maxY)) statusItemBottom=\(buttonBottom) gapAboveStatusItem=\(gap) frame=\(window.frame) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1)")
+        NSLog("Sajda Time: popoverTop=\(String(format: "%.1f", window.frame.maxY)) statusItemBottom=\(buttonBottom) gapAboveStatusItem=\(gap) frame=\(window.frame) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1)")
     }
 
     /// Make sure the panel hangs below the status item rather than rising into

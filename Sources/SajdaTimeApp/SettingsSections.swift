@@ -122,6 +122,9 @@ struct SummaryCard: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous))
         .contentShape(Rectangle())
+        // Always light: the banner artwork behind the text is pale in both
+        // schemes, so dark text is what stays readable.
+        .environment(\.colorScheme, .light)
         .onTapGesture { goTo(.prayerTimes) }
     }
 }
@@ -620,6 +623,30 @@ struct AppearanceSection: View {
     @ObservedObject var state: AppState
 
     var body: some View {
+        SettingsCard(title: "Appearance", symbol: "circle.lefthalf.filled") {
+            CardRow("Theme", subtitle: "Applies to the panel and the settings window.") {
+                GreenSegmented(
+                    options: AppAppearance.allCases.map { ($0, $0.displayName) },
+                    selection: state.binding(\.appearance)
+                )
+                .frame(width: 240)
+            }
+            CardRow("") {
+                HStack(spacing: 14) {
+                    ForEach(AppAppearance.allCases, id: \.self) { option in
+                        HStack(spacing: 5) {
+                            Image(systemName: option.symbol)
+                                .font(.system(size: 11))
+                            Text(option.displayName)
+                                .font(.system(size: 11, design: .rounded))
+                        }
+                        .foregroundStyle(state.settings.appearance == option ? Palette.greenDeep : Color.secondary)
+                    }
+                    Spacer()
+                }
+            }
+        }
+
         SettingsCard(title: "Clock", symbol: "clock.fill") {
             CardRow("Time format", subtitle: "Applies to the panel, the menu bar and all times shown here.") {
                 GreenSegmented(

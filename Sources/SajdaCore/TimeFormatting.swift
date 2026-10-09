@@ -1,5 +1,28 @@
 import Foundation
 
+/// Which appearance the app uses, independent of the system setting.
+public enum AppAppearance: String, Codable, CaseIterable, Sendable {
+    case system
+    case light
+    case dark
+
+    public var displayName: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+
+    public var symbol: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.fill"
+        }
+    }
+}
+
 /// How clock times are written throughout the app.
 public enum ClockFormat: String, Codable, CaseIterable, Sendable {
     case twelveHour

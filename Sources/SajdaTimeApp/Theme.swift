@@ -127,8 +127,16 @@ struct AppMark: View {
 struct BrandLogo: View {
     var width: CGFloat
 
+    @Environment(\.colorScheme) private var scheme
+
+    /// The wordmark is dark green, so it needs a light counterpart on dark
+    /// backgrounds; the dome keeps its colour in both.
+    private var assetName: String {
+        scheme == .dark ? "logo-dark" : "logo"
+    }
+
     var body: some View {
-        if let image = NSImage(named: "logo") {
+        if let image = NSImage(named: assetName) {
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
@@ -173,6 +181,19 @@ struct SettingsCard<Content: View>: View {
     var tint: Color = Palette.green
     @ViewBuilder var content: Content
 
+    @Environment(\.colorScheme) private var scheme
+
+    /// A tinted glass rather than plain `.regular`.
+    ///
+    /// Untinted glass is fully see-through, so over a busy or dark desktop the
+    /// text inside lost contrast. The tint raises the backing opacity in both
+    /// schemes without turning the card opaque.
+    private var cardGlass: Glass {
+        scheme == .dark
+            ? .regular.tint(Color.black.opacity(0.34))
+            : .regular.tint(Color.white.opacity(0.42))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let title {
@@ -198,7 +219,11 @@ struct SettingsCard<Content: View>: View {
             .padding(.top, title == nil ? 12 : 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous))
+        .glassEffect(cardGlass, in: RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous)
+                .strokeBorder(Color.primary.opacity(scheme == .dark ? 0.10 : 0.06))
+        )
     }
 }
 

@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import UserNotifications
 import SajdaCore
 
@@ -26,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     let state = AppState()
     private var statusItem: StatusItemController?
+    private var cancellables: Set<AnyCancellable> = []
     private var settingsWindow: SettingsWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -38,6 +40,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         statusItem = StatusItemController(state: state) { [weak self] section in
             self?.openSettings(section: section)
         }
+
+        // The appearance preference applies to every window, the popover
+        // included, so it is set on the application rather than per view.
+        AppearanceController.apply(state.settings.appearance)
+        state.$settings
+            .map(\.appearance)
+            .removeDuplicates()
+            .sink { AppearanceController.apply($0) }
+            .store(in: &cancellables)
 
         if ProcessInfo.processInfo.environment["SAJDA_OPEN_SETTINGS"] == "1" {
             openSettings()

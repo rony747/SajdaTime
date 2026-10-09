@@ -96,7 +96,7 @@ Tests/SajdaCoreTests/ XCTest wrapper around the shared self-test
 | file | used for |
 | --- | --- |
 | `appicon.png` | the app icon, the menu bar-adjacent mark and the panel header |
-| `logo.png` | the wordmark in the settings sidebar and About |
+| `logo.png` / `logo-dark.png` | the wordmark, per colour scheme |
 | `banner.png` | the artwork behind the next-prayer banner and the General summary |
 
 `AppIcon.icns` is generated from `appicon.png` by `build.sh` rather than
@@ -136,6 +136,31 @@ Both surfaces are translucent, which is what lets the glass read as glass:
   background, hosting an `NSGlassEffectView`. Without that the cards sat on an
   opaque `windowBackgroundColor` and rendered as flat rectangles — which is why
   settings did not look like Liquid Glass while the popover did.
+
+## Appearance
+
+`Appearance › Theme` switches between **System**, **Light** and **Dark**. The
+preference is applied to `NSApp.appearance`, so it covers the panel and the
+settings window together rather than per view.
+
+Three things had to change for dark mode to be readable:
+
+- **Cards were plain `.regular` glass**, which is fully see-through; over a dark
+  or busy desktop the text inside lost contrast. Cards now use a scheme-aware
+  tint — a dark tint in dark mode, a light one in light — plus a hairline
+  border.
+- **The settings window** backs its glass with a scrim of the window background
+  colour, keeping translucency without letting the desktop dominate.
+- **The banner artwork is pale in both schemes**, so its text is pinned to the
+  light colour scheme. Otherwise it turned white in dark mode and disappeared
+  into the cream background.
+
+The wordmark is dark green and vanished on dark backgrounds, so
+`logo-dark.png` is generated from `logo.png`: the dome and the wordmark are
+separated *spatially* (the dome is saturated and occupies the left ~30% of the
+image), the wordmark and tagline are recoloured to a light mint, and the dome is
+brightened with its hue intact. `BrandLogo` picks the variant from the colour
+scheme.
 
 ## Clock format
 

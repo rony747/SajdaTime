@@ -282,6 +282,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var showHijriDate: Bool
     /// 12-hour ("5:24 PM") or 24-hour ("17:24") clocks.
     public var clockFormat: ClockFormat
+    /// Light, dark, or follow the system.
+    public var appearance: AppAppearance
     public var language: AppLanguage
 
     // Notifications
@@ -328,6 +330,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         showIshraq: Bool = false,
         showHijriDate: Bool = true,
         clockFormat: ClockFormat = .twelveHour,
+        appearance: AppAppearance = .system,
         language: AppLanguage = .system,
         notificationsEnabled: Bool = true,
         defaultSoundName: String = "Soft chime",
@@ -366,6 +369,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.showIshraq = showIshraq
         self.showHijriDate = showHijriDate
         self.clockFormat = clockFormat
+        self.appearance = appearance
         self.language = language
         self.notificationsEnabled = notificationsEnabled
         self.defaultSoundName = defaultSoundName

@@ -26,6 +26,8 @@ struct SajdaTimeCtl {
             selftest()
         case "store":
             await storeProbe()
+        case "seed-appearance":
+            seedAppearance(Array(args.dropFirst()))
         case "countdown":
             await countdown(Array(args.dropFirst()))
         default:
@@ -56,12 +58,40 @@ struct SajdaTimeCtl {
           store
               Exercise the exact load path the app uses, including the cache.
 
+          seed-appearance <system|light|dark>
+              Write a settings blob with that appearance into the app's own
+              preferences domain. A development aid: the app's UI cannot
+              otherwise be exercised without a screen.
+
           countdown <lat> <lng> <tz> [--method ID] [--school 0|1] [--date YYYY-MM-DD]
               Simulate the menu bar across a whole day, showing each prayer's
               remaining window rather than the gap to the next prayer.
 
         Set PRAYERCTL_SECONDS=1 for second-level output.
         """)
+    }
+
+    /// Write a settings blob into the app's preferences domain so a specific
+    /// appearance can be exercised. Development aid only.
+    static func seedAppearance(_ args: [String]) {
+        guard let raw = args.first, let appearance = AppAppearance(rawValue: raw) else {
+            print("usage: sajdactl seed-appearance <system|light|dark>")
+            exit(2)
+        }
+        var settings = AppSettings.fresh(for: .current)
+        settings.appearance = appearance
+        guard let data = try? JSONEncoder().encode(settings) else {
+            print("could not encode settings"); exit(1)
+        }
+        let domain = "app.local.sajdatime"
+        guard let defaults = UserDefaults(suiteName: domain) else {
+            print("could not open domain \(domain)"); exit(1)
+        }
+        defaults.set(data, forKey: "\(domain).settings.v2")
+        // Skip the app's first-run location seeding so the value is not reset.
+        defaults.set(true, forKey: "\(domain).migrated.windowCountdown")
+        defaults.synchronize()
+        print("seeded \(domain) with appearance=\(appearance.rawValue) (\(data.count) bytes)")
     }
 
     /// Mirrors `AppState.refresh()` so the app's data path can be verified

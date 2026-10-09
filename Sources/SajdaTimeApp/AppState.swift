@@ -37,7 +37,11 @@ final class AppState: ObservableObject {
     private let store: PrayerTimesStore
     // Bump this whenever the settings schema changes incompatibly: a stale blob
     // is then ignored and the app starts from timezone-seeded defaults.
-    private let defaultsKey = "app.local.sajda.settings.v2"
+    private let defaultsKey = "\(AppState.preferencesDomain).settings.v2"
+
+    /// The app's preferences domain. Kept in one place so the settings key can
+    /// never drift from the bundle identifier, which a previous rename caused.
+    static let preferencesDomain = "app.local.sajdatime"
     private var ticker: Timer?
     private var refreshTask: Task<Void, Never>?
     private var lastLoadedDay: Date?

@@ -39,7 +39,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             guard let self, let window = self.window else { return }
             if !window.isKeyWindow { window.makeKey() }
             if ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1" {
-                NSLog("SajdaTime: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) glass=\(self.window?.contentView is NSGlassEffectView) frame=\(window.frame)")
+                NSLog("Sajda Time: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) glass=\(self.window?.contentView is NSGlassEffectView) appearance=\(NSApp.appearance?.name.rawValue ?? "system") frame=\(window.frame)")
             }
         }
     }

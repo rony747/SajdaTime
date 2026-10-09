@@ -66,7 +66,7 @@ cp "$BIN/SajdaTime" "$APP/Contents/MacOS/SajdaTime"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 # In-app artwork, loaded by name from Contents/Resources.
-for asset in appicon banner logo; do
+for asset in appicon banner logo logo-dark; do
     if [ -f "Resources/Assets/$asset.png" ]; then
         cp "Resources/Assets/$asset.png" "$APP/Contents/Resources/$asset.png"
     fi

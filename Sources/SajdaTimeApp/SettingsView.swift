@@ -79,6 +79,10 @@ struct SettingsView: View {
             detail
         }
         .frame(width: 880, height: 640)
+        // Glass alone let the desktop through far too strongly, which is what
+        // made the text hard to read. This scrim keeps the translucency but
+        // gives the content a consistent, scheme-correct base.
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.62))
         .onChange(of: state.requestedSettingsSection) { _, newValue in
             section = newValue
         }

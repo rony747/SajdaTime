@@ -152,6 +152,10 @@ struct PanelView: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .contentShape(Rectangle())
+            // The banner artwork and its gradient are always light, so the text
+            // is pinned to the light scheme; otherwise it turned white in dark
+            // mode and vanished into the cream background.
+            .environment(\.colorScheme, .light)
         }
         .buttonStyle(.plain)
     }

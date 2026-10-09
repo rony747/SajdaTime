@@ -23,7 +23,7 @@ enum LoginItem {
                 }
             }
         } catch {
-            NSLog("SajdaTime: launch-at-login change failed: \(error.localizedDescription)")
+            NSLog("Sajda Time: launch-at-login change failed: \(error.localizedDescription)")
             return false
         }
         return true
