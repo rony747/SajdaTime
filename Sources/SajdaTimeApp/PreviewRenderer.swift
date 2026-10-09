@@ -42,6 +42,23 @@ enum PreviewRenderer {
                     .environment(\.colorScheme, scheme),
                     to: directory, name: "alert-\(prayer.rawValue)-\(label)"
                 )
+                // An ultrawide frame, which is the shape that exposed the
+                // backdrop resizing the layout.
+                write(
+                    PrayerAlertView(
+                        prayer: prayer,
+                        time: state.now,
+                        place: state.settings.locationName,
+                        hijri: state.today?.hijri?.formatted,
+                        settings: state.settings,
+                        quote: ReminderQuotes.all[index % ReminderQuotes.all.count],
+                        snoozeMinutes: state.settings.snoozeMinutes,
+                        onDismiss: {}, onSnooze: {}, onMuteToday: {}
+                    )
+                    .frame(width: 3254, height: 1072)
+                    .environment(\.colorScheme, scheme),
+                    to: directory, name: "alert-wide-\(prayer.rawValue)-\(label)"
+                )
             }
 
             // The compass at known headings, so the bezel rotation and the

@@ -3,10 +3,9 @@ import SajdaCore
 
 /// The full-screen reminder shown when a prayer begins.
 ///
-/// Deliberately a screen-filling modal rather than a banner: it is meant to be
-/// noticed. The backdrop is chosen by prayer, since the light in each image
-/// matches the time of day that prayer falls at, and the whole composition is
-/// laid out for a single screen — the controller creates one window per display.
+/// Laid out to match the supplied design: the app header sits at the top, the
+/// prayer name and time are centred, and the artwork spans the foot of the
+/// screen with the buttons sitting on it.
 struct PrayerAlertView: View {
     let prayer: Prayer
     let time: Date
@@ -27,42 +26,67 @@ struct PrayerAlertView: View {
     /// dark text; the rest are daylight or golden hour.
     private var washOpacity: Double {
         switch prayer {
-        case .isha: return 0.46
-        case .maghrib: return 0.26
-        default: return 0.20
+        case .isha: return 0.38
+        case .maghrib: return 0.18
+        default: return 0.10
         }
     }
 
     var body: some View {
-        ZStack {
-            backdrop
-            wash
-            // A soft pool of light behind the middle so the text sits on a calm
-            // area while the photograph still reads at the edges.
-            RadialGradient(
-                colors: [Color.white.opacity(0.60), .clear],
-                center: .center,
-                startRadius: 60,
-                endRadius: 900
-            )
+        // Laid out as overlays on a plain fill rather than as a ZStack.
+        //
+        // A ZStack sizes itself to its largest child, and `aspectRatio(.fill)`
+        // makes the backdrop larger than the screen — `.clipped()` only clips
+        // drawing, it does not shrink layout. The stack therefore grew to the
+        // image's real size, the Spacers expanded to fill that phantom height,
+        // and everything below the header was pushed off screen. Overlay children
+        // never resize their parent, so the fill stays exactly the display size.
+        Color.black
+            .overlay { backdrop }
+            .overlay { wash }
+            // A gentle pool of light behind the middle, so the text sits on a
+            // calm area while the photograph still reads.
+            .overlay {
+                RadialGradient(
+                    colors: [Color.white.opacity(0.34), .clear],
+                    center: .center,
+                    startRadius: 40,
+                    endRadius: 820
+                )
+            }
+            .overlay { layout }
+            .clipped()
+            .ignoresSafeArea()
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.45)) { appeared = true }
+            }
+    }
+
+    // MARK: - Layout
+
+    private var layout: some View {
+        VStack(spacing: 0) {
+            header
+                .padding(.horizontal, 56)
+                .padding(.top, 36)
+
+            Spacer(minLength: 24)
 
             VStack(spacing: 0) {
-                header
-                Spacer(minLength: 16)
-                centreBlock
-                Spacer(minLength: 16)
-                footer
+                titleBlock
+                timeChip.padding(.top, 20)
+                metaLine.padding(.top, 14)
+                hadithCard.padding(.top, 26)
             }
-            .padding(.horizontal, 64)
-            .padding(.vertical, 44)
-            .frame(maxWidth: 1560)
-            .opacity(appeared ? 1 : 0)
-            .offset(y: appeared ? 0 : 14)
+            .padding(.horizontal, 56)
+            .frame(maxWidth: 1000)
+
+            Spacer(minLength: 24)
+
+            artwork
         }
-        .ignoresSafeArea()
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.45)) { appeared = true }
-        }
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 14)
     }
 
     // MARK: - Backdrop
@@ -85,11 +109,12 @@ struct PrayerAlertView: View {
     private var wash: some View {
         ZStack {
             Color.white.opacity(washOpacity)
-            // Slight darkening at the very top and bottom frames the photograph.
-            LinearGradient(
-                colors: [Color.black.opacity(0.16), .clear, Color.black.opacity(0.10)],
-                startPoint: .top,
-                endPoint: .bottom
+            // A vignette adds depth and pulls the eye to the middle.
+            RadialGradient(
+                colors: [.clear, .clear, Color.black.opacity(0.26)],
+                center: .center,
+                startRadius: 140,
+                endRadius: 1150
             )
         }
         .ignoresSafeArea()
@@ -99,10 +124,10 @@ struct PrayerAlertView: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            AppMark(size: 58)
+            AppMark(size: 60)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Sajda Time")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 27, weight: .bold, design: .rounded))
                 Text("Your Daily Connection")
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Palette.greenDeep.opacity(0.75))
@@ -116,37 +141,30 @@ struct PrayerAlertView: View {
             .foregroundStyle(Palette.greenDeep)
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
-            .background(Capsule().fill(.white.opacity(0.75)))
-            .overlay(Capsule().strokeBorder(.white.opacity(0.9)))
+            .background(Capsule().fill(.white.opacity(0.8)))
+            .overlay(Capsule().strokeBorder(.white.opacity(0.95)))
         }
         .foregroundStyle(Palette.greenDeep)
+        // The header lands on bright cloud in several of the backdrops.
+        .shadow(color: .white.opacity(0.95), radius: 12, y: 1)
     }
 
     // MARK: - Centre
 
-    private var centreBlock: some View {
-        VStack(spacing: 16) {
+    private var titleBlock: some View {
+        VStack(spacing: 8) {
             Text("It's time for \(prayer.displayName)")
-                .font(.system(size: 84, weight: .bold, design: .serif))
-                .tracking(-1.5)
+                .font(.system(size: 76, weight: .bold, design: .serif))
+                .tracking(-1.2)
                 .foregroundStyle(Palette.greenDeep)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 // Lifts the heading off a busy photograph.
-                .shadow(color: .white.opacity(0.85), radius: 22, y: 2)
+                .shadow(color: .white.opacity(0.9), radius: 20, y: 2)
 
             Text("Pause for prayer and reconnect.")
-                .font(.system(size: 28, design: .serif))
-                .foregroundStyle(Palette.greenDeep.opacity(0.82))
-
-            timeChip
-
-            Text(metaText)
-                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .font(.system(size: 26, design: .serif))
                 .foregroundStyle(Palette.greenDeep.opacity(0.85))
-                .padding(.top, 2)
-
-            hadithCard
         }
         .multilineTextAlignment(.center)
     }
@@ -154,23 +172,32 @@ struct PrayerAlertView: View {
     private var timeChip: some View {
         HStack(spacing: 14) {
             Image(systemName: "clock")
-                .font(.system(size: 40, weight: .medium))
+                .font(.system(size: 38, weight: .medium))
             Text(settings.clock(time))
-                .font(.system(size: 62, weight: .bold, design: .rounded))
+                .font(.system(size: 58, weight: .bold, design: .rounded))
                 .monospacedDigit()
         }
         .foregroundStyle(Palette.greenDeep)
-        .padding(.horizontal, 42)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 40)
+        .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(.white.opacity(0.72))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(Palette.green.opacity(0.35), lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Palette.green.opacity(0.3), lineWidth: 1.5)
         )
-        .shadow(color: Palette.greenDeep.opacity(0.18), radius: 18, y: 6)
+        .shadow(color: Palette.greenDeep.opacity(0.16), radius: 16, y: 5)
+    }
+
+    private var metaLine: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "mappin.and.ellipse").font(.system(size: 14))
+            Text(metaText)
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+        }
+        .foregroundStyle(Palette.greenDeep.opacity(0.9))
     }
 
     private var metaText: String {
@@ -182,87 +209,109 @@ struct PrayerAlertView: View {
     }
 
     private var hadithCard: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             Image(systemName: quote.kind == .quran ? "book.closed.fill" : "text.book.closed.fill")
-                .font(.system(size: 24))
+                .font(.system(size: 22))
                 .foregroundStyle(Palette.greenDeep)
-                .frame(width: 54, height: 54)
+                .frame(width: 50, height: 50)
                 .background(
-                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(Palette.greenSoft)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .strokeBorder(.white.opacity(0.9), lineWidth: 1)
                 )
 
             Text(quote.displayText)
-                .font(.system(size: 26, design: .serif))
-                .lineSpacing(9)
+                .font(.system(size: 25, design: .serif))
+                .lineSpacing(8)
                 .foregroundStyle(Palette.greenDeep)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 12) {
-                Rectangle().fill(Palette.greenDeep.opacity(0.22)).frame(width: 54, height: 1)
+                Rectangle().fill(Palette.greenDeep.opacity(0.22)).frame(width: 50, height: 1)
                 Text(quote.kind == .quran ? quote.reference : "— \(quote.reference)")
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundStyle(Palette.greenDeep.opacity(0.7))
-                Rectangle().fill(Palette.greenDeep.opacity(0.22)).frame(width: 54, height: 1)
+                Rectangle().fill(Palette.greenDeep.opacity(0.22)).frame(width: 50, height: 1)
             }
         }
-        .padding(.horizontal, 40)
-        .padding(.vertical, 30)
-        .frame(maxWidth: 880)
+        .padding(.horizontal, 36)
+        .padding(.vertical, 26)
+        .frame(maxWidth: 820)
         .background(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(.white.opacity(0.66))
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.white.opacity(0.64))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(.white.opacity(0.85), lineWidth: 1.5)
         )
-        .shadow(color: Palette.greenDeep.opacity(0.14), radius: 24, y: 10)
-        .padding(.top, 6)
+        .shadow(color: Palette.greenDeep.opacity(0.12), radius: 22, y: 8)
     }
 
-    // MARK: - Footer
+    // MARK: - Foot
 
-    private var footer: some View {
-        VStack(spacing: 14) {
-            BannerArt(mode: .fit)
+    /// The artwork spans the foot of the screen with the buttons sitting on it,
+    /// as in the design.
+    private var artwork: some View {
+        ZStack(alignment: .bottom) {
+            BannerArt(mode: .fill)
                 .frame(maxWidth: .infinity)
-                .frame(height: 230)
-                // Feathered, otherwise the artwork's pale sky reads as a
-                // rectangle pasted onto the photograph.
+                .frame(height: 345)
+                .clipped()
+                // Feathered so the artwork blends into the photograph rather than
+                // reading as a rectangle laid over it.
                 .mask(
-                    RadialGradient(
-                        colors: [.black, .black.opacity(0.85), .clear],
-                        center: .center,
-                        startRadius: 40,
-                        endRadius: 430
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0.0),
+                            .init(color: .black, location: 0.44),
+                            .init(color: .black, location: 1.0),
+                        ],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0.0),
+                            .init(color: .black, location: 0.18),
+                            .init(color: .black, location: 0.82),
+                            .init(color: .clear, location: 1.0),
+                        ],
+                        startPoint: .leading, endPoint: .trailing
                     )
                 )
                 .allowsHitTesting(false)
 
-            HStack(spacing: 18) {
-                alertButton("Dismiss", systemImage: "xmark", action: onDismiss)
-                alertButton("Snooze \(snoozeMinutes) min",
-                            systemImage: "clock.arrow.circlepath",
-                            action: onSnooze)
-            }
-
-            Button(action: onMuteToday) {
-                HStack(spacing: 8) {
-                    Rectangle().fill(Palette.greenDeep.opacity(0.3)).frame(width: 44, height: 1)
-                    Image(systemName: "speaker.slash.fill").font(.system(size: 12))
-                    Text("Mute Adhan Today")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                    Rectangle().fill(Palette.greenDeep.opacity(0.3)).frame(width: 44, height: 1)
+            VStack(spacing: 16) {
+                HStack(spacing: 18) {
+                    alertButton("Dismiss", systemImage: "xmark", action: onDismiss)
+                    alertButton("Snooze \(snoozeMinutes) min",
+                                systemImage: "clock.arrow.circlepath",
+                                action: onSnooze)
                 }
-                .foregroundStyle(Palette.greenDeep.opacity(0.85))
+                muteRow
             }
-            .buttonStyle(.plain)
+            .padding(.bottom, 26)
         }
+        .frame(height: 345)
+    }
+
+    private var muteRow: some View {
+        Button(action: onMuteToday) {
+            HStack(spacing: 8) {
+                Rectangle().fill(Palette.greenDeep.opacity(0.3)).frame(width: 44, height: 1)
+                Image(systemName: "speaker.slash.fill").font(.system(size: 12))
+                Text("Mute Adhan Today")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                Rectangle().fill(Palette.greenDeep.opacity(0.3)).frame(width: 44, height: 1)
+            }
+            .foregroundStyle(Palette.greenDeep.opacity(0.85))
+        }
+        .buttonStyle(.plain)
     }
 
     private func alertButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
@@ -272,17 +321,17 @@ struct PrayerAlertView: View {
                 Text(title).font(.system(size: 17, weight: .semibold, design: .rounded))
             }
             .foregroundStyle(Palette.greenDeep)
-            .frame(width: 260)
-            .padding(.vertical, 16)
+            .frame(width: 250)
+            .padding(.vertical, 15)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.white.opacity(0.8))
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(.white.opacity(0.82))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
                     .strokeBorder(.white.opacity(0.95), lineWidth: 1.5)
             )
-            .shadow(color: Palette.greenDeep.opacity(0.16), radius: 14, y: 5)
+            .shadow(color: Palette.greenDeep.opacity(0.15), radius: 12, y: 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
