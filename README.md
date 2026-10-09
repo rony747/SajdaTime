@@ -318,6 +318,17 @@ one of the two pages suggested. [sunnah.com](https://sunnah.com/bukhari/8) could
 not be used: it answers automated requests with HTTP 403 behind a Cloudflare
 challenge, so nothing here was taken from it or checked against it.
 
+## The menu bar panel
+
+The row of glass pills that used to sit under the prayer list (Calendar,
+Settings, Reminders, and Qibla where a magnetometer exists) has been removed.
+Those destinations are now small icons in the panel header: calendar, settings,
+and Qibla only on a machine that reports a heading. The overflow menu keeps
+refresh, detect location and quit.
+
+That took the popover from 761pt to 674pt, and the footer still carries the
+calculation method and madhab.
+
 ## Typography and ink
 
 Everything is set in the macOS system faces — no bundled or third-party fonts.

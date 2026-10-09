@@ -54,7 +54,10 @@ struct PrayerAlertView: View {
                     endRadius: 820
                 )
             }
-            .overlay { layout }
+            // The artwork is a base the content sits on, not a row in the flow.
+            .overlay(alignment: .bottom) { artwork }
+            .overlay(alignment: .top) { header }
+            .overlay { centredContent }
             .clipped()
             .ignoresSafeArea()
             .onAppear {
@@ -64,27 +67,19 @@ struct PrayerAlertView: View {
 
     // MARK: - Layout
 
-    private var layout: some View {
+    /// Everything from the prayer name to the buttons, as a single block centred
+    /// on the screen.
+    private var centredContent: some View {
         VStack(spacing: 0) {
-            header
-                .padding(.horizontal, 56)
-                .padding(.top, 36)
-
-            Spacer(minLength: 24)
-
-            VStack(spacing: 0) {
-                titleBlock
-                timeChip.padding(.top, 20)
-                metaLine.padding(.top, 14)
-                hadithCard.padding(.top, 26)
-            }
-            .padding(.horizontal, 56)
-            .frame(maxWidth: 1000)
-
-            Spacer(minLength: 24)
-
-            artwork
+            titleBlock
+            timeChip.padding(.top, 20)
+            metaLine.padding(.top, 14)
+            hadithCard.padding(.top, 26)
+            actions.padding(.top, 32)
         }
+        .padding(.horizontal, 56)
+        .frame(maxWidth: 1000)
+        .frame(maxHeight: .infinity)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 14)
     }
@@ -148,6 +143,8 @@ struct PrayerAlertView: View {
         .foregroundStyle(Palette.greenInk)
         // The header lands on bright cloud in several of the backdrops.
         .shadow(color: .white.opacity(0.95), radius: 12, y: 1)
+        .padding(.horizontal, 56)
+        .padding(.top, 36)
     }
 
     // MARK: - Centre
@@ -262,8 +259,7 @@ struct PrayerAlertView: View {
     /// The artwork spans the foot of the screen with the buttons sitting on it,
     /// as in the design.
     private var artwork: some View {
-        ZStack(alignment: .bottom) {
-            BannerArt(mode: .fill)
+        BannerArt(mode: .fill)
                 .frame(maxWidth: .infinity)
                 .frame(height: 345)
                 .clipped()
@@ -291,24 +287,24 @@ struct PrayerAlertView: View {
                     )
                 )
                 .allowsHitTesting(false)
+                .frame(height: 345)
+    }
 
-            VStack(spacing: 16) {
-                // The one action the design wants people to take, so it is by
-                // far the largest target and the only filled button.
-                dismissButton
+    private var actions: some View {
+        VStack(spacing: 16) {
+            // The one action the design wants people to take, so it is by far
+            // the largest target and the only filled button.
+            dismissButton
 
-                HStack(spacing: 12) {
-                    secondaryButton("Snooze \(snoozeMinutes) min",
-                                    systemImage: "clock.arrow.circlepath",
-                                    action: onSnooze)
-                    secondaryButton("Mute Adhan Today",
-                                    systemImage: "speaker.slash.fill",
-                                    action: onMuteToday)
-                }
+            HStack(spacing: 12) {
+                secondaryButton("Snooze \(snoozeMinutes) min",
+                                systemImage: "clock.arrow.circlepath",
+                                action: onSnooze)
+                secondaryButton("Mute Adhan Today",
+                                systemImage: "speaker.slash.fill",
+                                action: onMuteToday)
             }
-            .padding(.bottom, 40)
         }
-        .frame(height: 345)
     }
 
     /// The primary action: wide, tall, filled, and bound to Return.

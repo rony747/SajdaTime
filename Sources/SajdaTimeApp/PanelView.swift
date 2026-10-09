@@ -31,7 +31,6 @@ struct PanelView: View {
                 placeAndClock
                 nextPrayerBanner
                 prayerList
-                actionTiles
                 footer
             case .qibla:
                 QiblaView(coordinate: state.settings.coordinate,
@@ -58,16 +57,36 @@ struct PanelView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
-            overflowMenu
+
+            // The row of pills that used to sit under the prayer list is gone;
+            // these are the same destinations as small header icons.
+            HStack(spacing: 2) {
+                // Only where a real heading exists, as before.
+                if state.heading.isAvailable {
+                    iconButton("location.north.circle.fill") { page = .qibla }
+                }
+                iconButton("calendar") { page = .month }
+                iconButton("gearshape.fill") { onOpenSettings(.general) }
+                overflowMenu
+            }
         }
+    }
+
+    private func iconButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .semibold))
+                .frame(width: 28, height: 28)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Palette.accentText(scheme))
     }
 
     private var overflowMenu: some View {
         Menu {
             Button("Refresh times") { Task { await state.refresh() } }
             Button("Detect my location") { state.location.detectLocation() }
-            Divider()
-            Button("Settings…") { onOpenSettings(.general) }
             Divider()
             Button("Quit Sajda Time") { NSApplication.shared.terminate(nil) }
         } label: {
@@ -79,6 +98,7 @@ struct PanelView: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .frame(width: 28)
+        .foregroundStyle(Palette.accentText(scheme))
     }
 
     // MARK: - Place and clock
@@ -268,43 +288,6 @@ struct PanelView: View {
         }
         .buttonStyle(.plain)
         .help(windowSummary(for: prayer))
-    }
-
-    // MARK: - Action tiles
-
-    private var actionTiles: some View {
-        // Same rule as the settings cards: the container spacing must sit below
-        // the 8pt gap between the tiles or they merge into one glass shape.
-        GlassEffectContainer(spacing: 4) {
-            HStack(spacing: 8) {
-            // Hidden on a machine with no magnetometer: a compass that cannot
-            // know which way it is pointing would be decoration, not a tool.
-            if state.heading.isAvailable {
-                tile("location.north.circle.fill", "Qibla", Palette.green) { page = .qibla }
-            }
-            tile("calendar", "Calendar", .primary) { page = .month }
-            tile("gearshape.fill", "Settings", .primary) { onOpenSettings(.general) }
-                tile("bell.fill", "Reminders", Palette.amber) { onOpenSettings(.notifications) }
-            }
-        }
-    }
-
-    private func tile(_ symbol: String, _ title: String, _ tint: Color, action: @escaping () -> Void) -> some View {
-        // The system glass button style, which brings its own interactive
-        // behaviour rather than a hand-rolled background.
-        Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: symbol)
-                    .font(.system(size: 19, weight: .medium))
-                    .foregroundStyle(tint)
-                Text(title)
-                    .font(.system(size: 11, design: .rounded))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.glass)
     }
 
     // MARK: - Footer
