@@ -117,44 +117,41 @@ struct PanelView: View {
         return Button {
             cycleSelection()
         } label: {
-            HStack(spacing: 10) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(state.activeWindow == nil ? "Next Prayer" : "Current Prayer")
-                        .font(.system(size: 11, design: .rounded))
-                        .foregroundStyle(.secondary)
-                    Text(subject?.prayer.displayName ?? "—")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                    if let subject {
-                        Text(subject.isWindowEnd
-                             ? "in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now))
-                             : "in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Palette.greenDeep)
-                            .monospacedDigit()
+            VStack(spacing: 0) {
+                HStack(alignment: .center, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(state.activeWindow == nil ? "Next Prayer" : "Current Prayer")
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundStyle(.secondary)
+                        Text(subject?.prayer.displayName ?? "—")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                        if let subject {
+                            Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Palette.greenDeep)
+                                .monospacedDigit()
+                        }
                     }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
                 }
-                Spacer(minLength: 0)
-            }
-            .padding(.leading, 14)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Palette.bannerGradient)
-            .overlay(alignment: .bottomTrailing) {
+                .padding(.horizontal, 14)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+
+                // The artwork has its own band so it can never sit under the text.
                 BannerArt()
-                    .frame(height: 92)
-                    .allowsHitTesting(false)
+                    .frame(height: 58)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
             }
-            .overlay(alignment: .trailing) {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.trailing, 10)
-            }
+            .background(Palette.bannerGradient)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .contentShape(Rectangle())
-            // The banner artwork and its gradient are always light, so the text
-            // is pinned to the light scheme; otherwise it turned white in dark
-            // mode and vanished into the cream background.
+            // The banner artwork and gradient are always pale, so the text is
+            // pinned to the light scheme; otherwise it turned white on cream.
             .environment(\.colorScheme, .light)
         }
         .buttonStyle(.plain)
@@ -240,15 +237,21 @@ struct PanelView: View {
     // MARK: - Action tiles
 
     private var actionTiles: some View {
-        HStack(spacing: 8) {
+        // Same rule as the settings cards: the container spacing must sit below
+        // the 8pt gap between the tiles or they merge into one glass shape.
+        GlassEffectContainer(spacing: 4) {
+            HStack(spacing: 8) {
             tile("location.north.circle.fill", "Qibla", Palette.green) { page = .qibla }
             tile("calendar", "Calendar", .primary) { page = .month }
             tile("gearshape.fill", "Settings", .primary) { onOpenSettings(.general) }
-            tile("bell.fill", "Reminders", Palette.amber) { onOpenSettings(.notifications) }
+                tile("bell.fill", "Reminders", Palette.amber) { onOpenSettings(.notifications) }
+            }
         }
     }
 
     private func tile(_ symbol: String, _ title: String, _ tint: Color, action: @escaping () -> Void) -> some View {
+        // The system glass button style, which brings its own interactive
+        // behaviour rather than a hand-rolled background.
         Button(action: action) {
             VStack(spacing: 6) {
                 Image(systemName: symbol)
@@ -259,13 +262,9 @@ struct PanelView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.primary.opacity(0.05))
-            )
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glass)
     }
 
     // MARK: - Footer

@@ -52,9 +52,9 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var subheading: String {
         switch self {
-        case .general: return "Configure how SajdaTime works on your Mac."
+        case .general: return "Configure how Sajda Time works on your Mac."
         case .prayerTimes: return "How the times are calculated and from which source."
-        case .notifications: return "When SajdaTime alerts you, for each prayer."
+        case .notifications: return "When Sajda Time alerts you, for each prayer."
         case .location: return "Where you are, and which clock times are shown on."
         case .appearance: return "Clock format and what the panel displays."
         case .menubar: return "What the menu bar item shows."
@@ -66,6 +66,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 struct SettingsView: View {
     @ObservedObject var state: AppState
     @State private var section: SettingsSection
+    @Environment(\.colorScheme) private var scheme
 
     init(state: AppState) {
         self.state = state
@@ -73,16 +74,13 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            sidebar
-            Divider()
-            detail
-        }
+        SettingsChrome(state: state, section: section, onSelect: { section = $0 })
         .frame(width: 880, height: 640)
-        // Glass alone let the desktop through far too strongly, which is what
-        // made the text hard to read. This scrim keeps the translucency but
-        // gives the content a consistent, scheme-correct base.
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.62))
+        // Glass alone let the desktop through far too strongly, which hurt
+        // contrast in dark mode. The scrim is deliberately asymmetric: dark mode
+        // needs a firm base for light text, while light mode needs very little or
+        // the window turns into a solid white sheet and the glass disappears.
+        .background(Color(nsColor: .windowBackgroundColor).opacity(scheme == .dark ? 0.58 : 0.20))
         .onChange(of: state.requestedSettingsSection) { _, newValue in
             section = newValue
         }
@@ -92,9 +90,37 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Sidebar
+}
 
-    private var sidebar: some View {
+/// Sidebar and detail together.
+///
+/// `scrolls` exists so the whole window can also be rendered offscreen for
+/// inspection: `ScrollView` is AppKit-backed and produces a blank image.
+struct SettingsChrome: View {
+    @ObservedObject var state: AppState
+    let section: SettingsSection
+    let onSelect: (SettingsSection) -> Void
+    var scrolls: Bool = true
+
+    var body: some View {
+        HStack(spacing: 0) {
+            SettingsSidebar(state: state, section: section, onSelect: onSelect)
+            Divider()
+            if scrolls {
+                ScrollView { SettingsDetailContent(state: state, section: section, goTo: onSelect) }
+            } else {
+                SettingsDetailContent(state: state, section: section, goTo: onSelect)
+            }
+        }
+    }
+}
+
+struct SettingsSidebar: View {
+    @ObservedObject var state: AppState
+    let section: SettingsSection
+    let onSelect: (SettingsSection) -> Void
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             BrandLogo(width: 178)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -119,8 +145,7 @@ struct SettingsView: View {
     private func sidebarRow(_ item: SettingsSection) -> some View {
         let selected = item == section
         return Button {
-            section = item
-            state.requestedSettingsSection = item
+            onSelect(item)
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: item.symbol)
@@ -143,35 +168,48 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Detail
+}
 
-    private var detail: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(section.heading)
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text(section.subheading)
-                        .font(.system(size: 12.5, design: .rounded))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.bottom, 2)
+struct SettingsDetailContent: View {
+    @ObservedObject var state: AppState
+    let section: SettingsSection
+    let goTo: (SettingsSection) -> Void
 
-                switch section {
-                case .general: GeneralSection(state: state, goTo: { section = $0 })
-                case .prayerTimes: PrayerTimesSection(state: state)
-                case .notifications: NotificationsSection(state: state)
-                case .location: LocationSection(state: state)
-                case .appearance: AppearanceSection(state: state)
-                case .menubar: MenubarSection(state: state)
-                case .about: AboutSection(state: state)
-                }
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 30)
-            .padding(.bottom, 22)
-            .frame(maxWidth: .infinity, alignment: .leading)
+    var body: some View {
+        // One container for the page of glass cards — the documented way to
+        // render several effects at once. The container spacing is deliberately
+        // *below* the 14pt spacing between cards: a larger value makes separate
+        // effects blend into one shape at rest, which would merge the cards.
+        GlassEffectContainer(spacing: 8) {
+            content
         }
+    }
+
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(section.heading)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                Text(section.subheading)
+                    .font(.system(size: 12.5, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.bottom, 2)
+
+            switch section {
+            case .general: GeneralSection(state: state, goTo: goTo)
+            case .prayerTimes: PrayerTimesSection(state: state)
+            case .notifications: NotificationsSection(state: state)
+            case .location: LocationSection(state: state)
+            case .appearance: AppearanceSection(state: state)
+            case .menubar: MenubarSection(state: state)
+            case .about: AboutSection(state: state)
+            }
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 30)
+        .padding(.bottom, 22)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

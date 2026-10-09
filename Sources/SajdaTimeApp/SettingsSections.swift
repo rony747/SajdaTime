@@ -57,7 +57,7 @@ struct GeneralSection: View {
         NotificationsSummaryCard(state: state, goTo: goTo)
 
         SettingsCard(title: "Startup & Language", symbol: "power") {
-            CardRow("Launch at login", subtitle: "Start SajdaTime automatically when you log in to your Mac.") {
+            CardRow("Launch at login", subtitle: "Start Sajda Time automatically when you log in to your Mac.") {
                 GreenToggle(isOn: state.binding(\.launchAtLogin))
             }
             CardRow("Language") {
@@ -80,51 +80,55 @@ struct SummaryCard: View {
     let goTo: (SettingsSection) -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Image(systemName: "mappin.and.ellipse").font(.system(size: 13, weight: .medium))
-                    Text(state.settings.locationName.isEmpty ? "Unknown place" : state.settings.locationName)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
-                Text(TimeFormatting.longDate(state.now, timeZone: state.settings.displayTimeZone))
-                    .font(.system(size: 11.5, design: .rounded))
-                    .foregroundStyle(.secondary)
-                if state.settings.showHijriDate, let hijri = state.today?.hijri {
-                    Text(hijri.formatted)
+        VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "mappin.and.ellipse").font(.system(size: 13, weight: .medium))
+                        Text(state.settings.locationName.isEmpty ? "Unknown place" : state.settings.locationName)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(TimeFormatting.longDate(state.now, timeZone: state.settings.displayTimeZone))
                         .font(.system(size: 11.5, design: .rounded))
                         .foregroundStyle(.secondary)
+                    if state.settings.showHijriDate, let hijri = state.today?.hijri {
+                        Text(hijri.formatted)
+                            .font(.system(size: 11.5, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
                 }
-            }
-            Spacer(minLength: 0)
+                Spacer(minLength: 0)
 
-            if let subject = state.countdownSubject {
-                VStack(alignment: .trailing, spacing: 1) {
-                    Text("Next Prayer")
-                        .font(.system(size: 10.5, design: .rounded))
-                        .foregroundStyle(.secondary)
-                    Text(subject.prayer.displayName)
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                    Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Palette.greenDeep)
-                        .monospacedDigit()
+                if let subject = state.countdownSubject {
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text("Next Prayer")
+                            .font(.system(size: 10.5, design: .rounded))
+                            .foregroundStyle(.secondary)
+                        Text(subject.prayer.displayName)
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                        Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Palette.greenDeep)
+                            .monospacedDigit()
+                    }
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            // Artwork gets its own band, so it can never overlap the text.
+            BannerArt()
+                .frame(height: 96)
+                .frame(maxWidth: .infinity)
+                .clipped()
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Palette.bannerGradient)
-        .overlay(alignment: .bottomTrailing) {
-            BannerArt().frame(height: 104).allowsHitTesting(false)
-        }
         .clipShape(RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous))
-        .contentShape(Rectangle())
-        // Always light: the banner artwork behind the text is pale in both
-        // schemes, so dark text is what stays readable.
         .environment(\.colorScheme, .light)
+        .contentShape(Rectangle())
         .onTapGesture { goTo(.prayerTimes) }
     }
 }
@@ -726,7 +730,7 @@ struct MenubarSection: View {
         }
 
         SettingsCard(title: "Startup", symbol: "power") {
-            CardRow("Launch at login", subtitle: "Start SajdaTime automatically when you log in to your Mac.") {
+            CardRow("Launch at login", subtitle: "Start Sajda Time automatically when you log in to your Mac.") {
                 GreenToggle(isOn: state.binding(\.launchAtLogin))
             }
         }

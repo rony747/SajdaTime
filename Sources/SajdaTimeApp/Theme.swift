@@ -158,14 +158,17 @@ struct BrandLogo: View {
     }
 }
 
-/// Landscape artwork used behind the next-prayer surfaces.
+/// Landscape artwork for the next-prayer surfaces.
+///
+/// Fits rather than fills: `fill` scaled the artwork past its frame and, with no
+/// clipping, it drew over the text above it.
 struct BannerArt: View {
     var body: some View {
         if let image = NSImage(named: "banner") {
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
-                .aspectRatio(contentMode: .fill)
+                .aspectRatio(contentMode: .fit)
         } else {
             SkylineSilhouette()
         }
@@ -189,9 +192,12 @@ struct SettingsCard<Content: View>: View {
     /// text inside lost contrast. The tint raises the backing opacity in both
     /// schemes without turning the card opaque.
     private var cardGlass: Glass {
+        // Dark mode needs a real tint to hold contrast. Light mode needs only a
+        // hint, otherwise the card turns into a plain white rectangle and the
+        // glass effect disappears.
         scheme == .dark
             ? .regular.tint(Color.black.opacity(0.34))
-            : .regular.tint(Color.white.opacity(0.42))
+            : .regular.tint(Color.white.opacity(0.14))
     }
 
     var body: some View {

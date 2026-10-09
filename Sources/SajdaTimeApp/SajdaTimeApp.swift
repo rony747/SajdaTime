@@ -50,6 +50,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             .sink { AppearanceController.apply($0) }
             .store(in: &cancellables)
 
+        // Offscreen render mode, used to inspect the interface without a screen.
+        if let directory = ProcessInfo.processInfo.environment["SAJDA_RENDER"] {
+            Task { @MainActor in
+                await PreviewRenderer.renderAll(state: state, to: URL(fileURLWithPath: directory))
+                NSApp.terminate(nil)
+            }
+            return
+        }
+
         if ProcessInfo.processInfo.environment["SAJDA_OPEN_SETTINGS"] == "1" {
             openSettings()
         }

@@ -137,6 +137,41 @@ Both surfaces are translucent, which is what lets the glass read as glass:
   opaque `windowBackgroundColor` and rendered as flat rectangles — which is why
   settings did not look like Liquid Glass while the popover did.
 
+## Following Apple's Liquid Glass guidance
+
+Applied from [Landmarks: Building an app with Liquid Glass](https://developer.apple.com/documentation/swiftui/landmarks-building-an-app-with-liquid-glass)
+and *Applying Liquid Glass to custom views*:
+
+- **Glass belongs to the control layer.** The settings window used to be one big
+  `NSGlassEffectView` with glass cards inside it — glass on glass, which is what
+  made everything mushy and low-contrast. The window is now a standard
+  translucent `NSVisualEffectView`, and glass is reserved for the surfaces
+  floating above it.
+- **`GlassEffectContainer` around groups of effects**, which the documentation
+  calls for both rendering performance and shape blending. The settings detail is
+  one container; the panel's action tiles are another.
+- **Container spacing must sit *below* the interior spacing.** The documentation
+  warns that a larger container spacing makes separate effects blend into one
+  shape at rest. The first attempt used 18 against 14pt card spacing, which would
+  have merged the cards; it is 8 against 14 now, and 4 against 8 for the tiles.
+- **`.buttonStyle(.glass)`** for the action tiles, replacing hand-rolled glass
+  backgrounds, so they get the system's interactive behaviour.
+- `glassEffect` is applied **after** the appearance modifiers, as required.
+
+## Inspecting the interface without a screen
+
+Screen capture is unavailable on this machine, so the app can render its own
+views: `SAJDA_RENDER=<dir>` writes the panel and every settings page, in light
+and dark, to PNGs and exits. This is how the artwork-over-text bug and the
+washed-out card were found.
+
+Two limits worth knowing:
+
+- `ImageRenderer` does not draw materials, so these renders verify **layout**,
+  not the glass appearance. Cards appear flat in them.
+- `Toggle`, `Menu` and `ScrollView` are AppKit-backed and render as placeholders
+  or blanks offscreen. `SettingsChrome(scrolls: false)` exists for this reason.
+
 ## Appearance
 
 `Appearance › Theme` switches between **System**, **Light** and **Dark**. The

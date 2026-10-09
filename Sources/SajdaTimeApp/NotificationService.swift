@@ -147,7 +147,7 @@ final class NotificationService: NSObject, ObservableObject {
             await requestAuthorization()
         }
         guard authorizationStatus == .authorized || authorizationStatus == .provisional else {
-            lastError = "Notifications are not allowed. Turn them on in System Settings › Notifications › SajdaTime."
+            lastError = "Notifications are not allowed. Turn them on in System Settings › Notifications › Sajda Time."
             return
         }
         let content = UNMutableNotificationContent()

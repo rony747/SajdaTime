@@ -39,7 +39,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             guard let self, let window = self.window else { return }
             if !window.isKeyWindow { window.makeKey() }
             if ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1" {
-                NSLog("Sajda Time: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) glass=\(self.window?.contentView is NSGlassEffectView) appearance=\(NSApp.appearance?.name.rawValue ?? "system") frame=\(window.frame)")
+                NSLog("Sajda Time: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) backdrop=\(self.window?.contentView is NSVisualEffectView) appearance=\(NSApp.appearance?.name.rawValue ?? "system") frame=\(window.frame)")
             }
         }
     }
@@ -63,22 +63,26 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         window.isMovableByWindowBackground = true
         window.hasShadow = true
 
-        let glass = NSGlassEffectView()
-        glass.style = .regular
-        glass.cornerRadius = 0
-        glass.autoresizingMask = [.width, .height]
+        // A standard translucent window, not a glass one. Glass is reserved for
+        // the interactive surfaces that float above this, which is how the
+        // design system intends it to be layered.
+        let backdrop = NSVisualEffectView()
+        backdrop.material = .underWindowBackground
+        backdrop.blendingMode = .behindWindow
+        backdrop.state = .followsWindowActiveState
+        backdrop.autoresizingMask = [.width, .height]
 
         let hosting = NSHostingView(rootView: SettingsView(state: state))
         hosting.translatesAutoresizingMaskIntoConstraints = false
-        glass.contentView = hosting
+        backdrop.addSubview(hosting)
         NSLayoutConstraint.activate([
-            hosting.topAnchor.constraint(equalTo: glass.topAnchor),
-            hosting.bottomAnchor.constraint(equalTo: glass.bottomAnchor),
-            hosting.leadingAnchor.constraint(equalTo: glass.leadingAnchor),
-            hosting.trailingAnchor.constraint(equalTo: glass.trailingAnchor),
+            hosting.topAnchor.constraint(equalTo: backdrop.topAnchor),
+            hosting.bottomAnchor.constraint(equalTo: backdrop.bottomAnchor),
+            hosting.leadingAnchor.constraint(equalTo: backdrop.leadingAnchor),
+            hosting.trailingAnchor.constraint(equalTo: backdrop.trailingAnchor),
         ])
 
-        window.contentView = glass
+        window.contentView = backdrop
         window.center()
         return window
     }
