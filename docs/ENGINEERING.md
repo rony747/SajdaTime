@@ -1,0 +1,546 @@
+# Sajda Time — engineering notes
+
+Implementation detail behind the app: why the interface is built the way it is,
+how the prayer times are computed and validated, and how to inspect the UI
+without a screen.
+
+For the overview, see the [README](../README.md).
+
+## What it does
+
+- **Real prayer times** fetched from the [Aladhan API](https://aladhan.com/prayer-times-api),
+  cached per day so the app opens instantly and keeps working offline.
+- **Offline calculation** built in — if the network is unavailable the app
+  computes the times on-device from solar geometry, and says so in the UI.
+- **Menu bar countdown** — icon, prayer name and time remaining, configurable.
+- **Reminders per prayer** — automatic or manual, e.g. 10 minutes before, at the
+  time, and 10 minutes after, set independently for each prayer.
+- **Settings** across General, Location & Time, Calculation, Notifications and
+  Focus Mode.
+- **Focus Mode** — a full-screen overlay during prayer, exitable with ⌘⎋.
+
+## Building
+
+From a clean checkout — no cached state, no generated files committed:
+
+```bash
+./build.sh                 # release, the default
+./build.sh debug           # -Onone -g
+```
+
+It prints its progress and finishes with the two artefacts:
+
+```
+==> Building SajdaCore (release)
+==> Building sajdactl
+==> Building SajdaTime app binary
+==> Assembling app bundle
+    version: 2.8.2 (build 20)
+    icon: AppIcon.icns generated
+    signed (ad-hoc)
+
+Done.
+  CLI : .build/bin/sajdactl
+  App : dist/Sajda Time.app
+```
+
+A clean release build takes about 25 seconds on an M-series Mac. To install it:
+
+```bash
+rm -rf "/Applications/Sajda Time.app"
+cp -R "dist/Sajda Time.app" /Applications/
+open "/Applications/Sajda Time.app"
+```
+
+To hand it to someone else, archive the bundle so the signature and resource
+forks survive:
+
+```bash
+ditto -c -k --sequesterRsrc --keepParent "dist/Sajda Time.app" SajdaTime.zip
+```
+
+### What the script actually does
+
+1. Compiles `Sources/SajdaCore/*.swift` into a static library, emitting a
+   `.swiftmodule` alongside it.
+2. Links `Sources/SajdaTimeCtl/*.swift` against it to produce the `sajdactl`
+   verification CLI.
+3. Links `Sources/SajdaTimeApp/*.swift` against it to produce the app binary.
+4. Assembles the bundle by hand: `Contents/MacOS/SajdaTime`, `Info.plist`,
+   `PkgInfo`, and the PNG/JPG artwork into `Contents/Resources`.
+5. Generates `AppIcon.icns` from `Resources/Assets/appicon.png` with `sips` and
+   `iconutil`, so the icon has one source of truth rather than a committed binary.
+6. Stamps `CFBundleShortVersionString` from `./VERSION` and `CFBundleVersion`
+   from the commit count, and warns if `HEAD` carries a tag that disagrees.
+7. Ad-hoc signs the bundle with `codesign --force --sign -`.
+
+### Requirements
+
+- **macOS 26 or later.** The target is `arm64-apple-macosx26.0`, and the
+  interface is built on Liquid Glass (`.glassEffect`, `GlassEffectContainer`).
+- Xcode command line tools for `swiftc`, `xcrun`, `sips` and `iconutil`.
+  Tested with Xcode 27 / Swift 6.4.
+- No package dependencies, so nothing is fetched at build time.
+
+The result is an ad-hoc signed `.app` that runs locally. It is **not** signed
+with a Developer ID and **not** notarised, so it cannot be distributed to other
+machines as-is; that needs your own signing certificate.
+
+### Version
+
+`./VERSION` is the single source of truth. The script stamps it into the bundle
+at build time, so the app cannot report a version that differs from the release —
+which it had: About reported `1.0.0` through several tagged releases because the
+plist was being bumped by hand and had been missed. `Resources/Info.plist` now
+holds a placeholder on purpose.
+
+### Why `build.sh` instead of `swift build`
+
+`Package.swift` is maintained and the project opens normally in Xcode, but the
+build script invokes `swiftc` directly. That is deliberate: in a sandboxed or
+restricted environment SwiftPM's build systems (both XCBuild and llbuild) cannot
+write their state files, and `swiftc` normally wraps macro plugin servers in
+`sandbox-exec`, which cannot nest inside another sandbox. `build.sh` therefore
+passes `-disable-sandbox` and manages the module cache itself, which makes the
+build reproducible under those conditions.
+
+## Verifying it
+
+The app ships a verification CLI rather than relying on unit tests alone:
+
+```bash
+./.build/bin/sajdactl selftest   # engine invariants, no network
+./.build/bin/sajdactl methods    # every calculation method vs the live API
+./.build/bin/sajdactl compare    # a fixed set of cities vs the live API
+./.build/bin/sajdactl matrix     # polar and edge-case latitudes
+./.build/bin/sajdactl store      # the app's exact fetch/cache path
+./.build/bin/sajdactl countdown 23.8103 90.4125 Asia/Dhaka --method KARACHI  # menu bar across a day
+./.build/bin/sajdactl show 51.5072 -0.1276 Europe/London --method MWL
+```
+
+`selftest` and the XCTest target run the *same* assertions, which live in
+`SajdaCoreSelfTest` so there is only one copy.
+
+### Current accuracy against Aladhan
+
+Measured over 132 samples covering all 22 shipped methods:
+
+| metric | value |
+| --- | --- |
+| mean absolute difference | **0.15 min** |
+| within 1 minute | 130 / 132 |
+| within 2 minutes | 132 / 132 |
+| worst case | 2 min |
+
+Reproduce with `sajdactl methods`.
+
+## Project layout
+
+```
+Sources/
+  SajdaCore/          pure logic, no UI, testable
+    Astronomy.swift        solar position (declination, equation of time)
+    PrayerCalculator.swift on-device prayer time computation
+    CalculationMethod.swift the 22 method definitions and madhabs
+    AladhanClient.swift    live API client
+    PrayerTimesStore.swift decides live / cached / calculated
+    PrayerTimesCache.swift per-day disk cache
+    AppSettings.swift      every user preference, as data
+    SelfTest.swift         executable specification
+  SajdaTimeApp/        the SwiftUI menu bar application
+  SajdaTimeCtl/        the verification CLI
+Tests/SajdaCoreTests/ XCTest wrapper around the shared self-test
+```
+
+## Brand assets
+
+`Resources/Assets/` holds the master artwork, all with transparent backgrounds:
+
+| file | used for |
+| --- | --- |
+| `appicon.png` | the app icon, the menu bar-adjacent mark and the panel header |
+| `logo.png` / `logo-dark.png` | the wordmark, per colour scheme |
+| `banner.png` | the artwork behind the next-prayer banner and the General summary. It **fills** its band edge to edge and is clipped, so it reads as a background rather than a picture floating in the middle of the card. |
+
+`AppIcon.icns` is generated from `appicon.png` by `build.sh` rather than
+committed, so the icon has one source of truth. The icon master sits on Apple's
+macOS grid (824pt of artwork inside a 1024pt canvas). Each view falls back to a
+drawn mosque if an asset is missing, so the UI cannot end up blank.
+
+## Design
+
+Built on Liquid Glass, in green with a warm amber for the sun prayers:
+
+- **App mark** — a mosque drawn as a `Shape`, so one glyph serves the sidebar,
+  the panel header and the menu bar at any size.
+- **Panel** — app mark and place header with a live clock, a gradient
+  next-prayer banner over a drawn skyline, one row per prayer (the open window
+  tinted green with a live countdown pill), four action tiles, and a footer
+  showing the calculation method and madhab.
+- **Calendar** is a real page, not decoration: the month with Umm al-Qura day
+  numbers alongside the Gregorian ones.
+- **Qibla is hidden unless the machine has a magnetometer.** Macs do not —
+  `CLLocationManager.headingAvailable` is false — so a compass could not know
+  which way it was pointing. Where a heading *is* available the page behaves like
+  a physical compass: the bezel turns so its north marks true north, a marker
+  sits on the bezel at the Qibla bearing, and a fixed pointer at the top shows
+  the direction you face, with a turn instruction.
+
+  The earlier version never rotated the bezel at all and drew the needle against
+  a fixed dial, which is why the direction read wrong.
+- **Settings** — sidebar with the app identity, and cards with icon headers.
+
+## Prayer windows, start to end
+
+Every prayer is shown as a span rather than a single instant — "5:24 – 6:43 AM",
+with what ends it underneath — because a prayer's time is a window with a length
+(Fajr ends at sunrise, Isha at Islamic midnight). The same detail appears in
+`Prayer Times › Prayer windows`, with each window's duration.
+
+## Window translucency
+
+Both surfaces are translucent, which is what lets the glass read as glass:
+
+- The **popover** gets its material from `NSPopover`.
+- The **settings window** is an `NSWindow` with `isOpaque = false` and a clear
+  background, hosting an `NSGlassEffectView`. Without that the cards sat on an
+  opaque `windowBackgroundColor` and rendered as flat rectangles — which is why
+  settings did not look like Liquid Glass while the popover did.
+
+## Following Apple's Liquid Glass guidance
+
+Applied from [Landmarks: Building an app with Liquid Glass](https://developer.apple.com/documentation/swiftui/landmarks-building-an-app-with-liquid-glass)
+and *Applying Liquid Glass to custom views*:
+
+- **Glass belongs to the control layer.** The settings window used to be one big
+  `NSGlassEffectView` with glass cards inside it — glass on glass, which is what
+  made everything mushy and low-contrast. The window is now a standard
+  translucent `NSVisualEffectView`, and glass is reserved for the surfaces
+  floating above it.
+- **`GlassEffectContainer` around groups of effects**, which the documentation
+  calls for both rendering performance and shape blending. The settings detail is
+  one container; the panel's action tiles are another.
+- **Container spacing must sit *below* the interior spacing.** The documentation
+  warns that a larger container spacing makes separate effects blend into one
+  shape at rest. The first attempt used 18 against 14pt card spacing, which would
+  have merged the cards; it is 8 against 14 now, and 4 against 8 for the tiles.
+- **`.buttonStyle(.glass)`** for the action tiles, replacing hand-rolled glass
+  backgrounds, so they get the system's interactive behaviour.
+- `glassEffect` is applied **after** the appearance modifiers, as required.
+
+## Inspecting the interface without a screen
+
+Screen capture is unavailable on this machine, so the app can render its own
+views: `SAJDA_RENDER=<dir>` writes the panel and every settings page, in light
+and dark, to PNGs and exits. This is how the artwork-over-text bug and the
+washed-out card were found.
+
+Development hooks, all environment-gated:
+
+| variable | effect |
+| --- | --- |
+| `SAJDA_RENDER=<dir>` | render every view to PNGs and exit |
+| `SAJDA_OPEN_POPOVER=1` | open the panel at launch |
+| `SAJDA_OPEN_SETTINGS=1` | open settings at launch |
+| `SAJDA_CYCLE_APPEARANCE=1` | cycle dark then light after launch |
+| `SAJDA_DEBUG=1` | log popover geometry, appearance and the menu bar label |
+| `SAJDA_FAKE_HEADING=<deg>` | pretend a magnetometer exists at a fixed heading |
+| `SAJDA_TEST_ALERT=<prayer>` | show the full-screen reminder for that prayer |
+
+`sajdactl seed-appearance <system\|light\|dark>` writes the preference directly
+into the app's domain so a specific theme can be exercised.
+
+Two limits worth knowing:
+
+- `ImageRenderer` does not draw materials, so these renders verify **layout**,
+  not the glass appearance. Cards appear flat in them.
+- `Toggle`, `Menu` and `ScrollView` are AppKit-backed and render as placeholders
+  or blanks offscreen. `SettingsChrome(scrolls: false)` exists for this reason.
+
+## Appearance
+
+`Appearance › Theme` switches between **System**, **Light** and **Dark**.
+
+It is applied in two places, on purpose. `NSApp.appearance` covers the settings
+window, but it does **not** reliably reach the popover's own window, so the menu
+bar panel kept its previous look until the app restarted. `StatusItemController`
+therefore sets `popover.appearance` and the hosting view's appearance as well,
+and re-applies both whenever the preference changes — so an open panel follows a
+theme change immediately.
+
+With **System**, the popover is left to AppKit (nil appearance), which tracks the
+macOS setting live.
+
+Three things had to change for dark mode to be readable:
+
+- **Cards were plain `.regular` glass**, which is fully see-through; over a dark
+  or busy desktop the text inside lost contrast. Cards now use a scheme-aware
+  tint — a dark tint in dark mode, a light one in light — plus a hairline
+  border.
+- **The settings window** backs its glass with a scrim of the window background
+  colour, keeping translucency without letting the desktop dominate.
+- **The banner artwork is pale in both schemes**, so its text is pinned to the
+  light colour scheme. Otherwise it turned white in dark mode and disappeared
+  into the cream background.
+
+The wordmark is dark green and vanished on dark backgrounds, so
+`logo-dark.png` is generated from `logo.png`: the dome and the wordmark are
+separated *spatially* (the dome is saturated and occupies the left ~30% of the
+image), the wordmark and tagline are recoloured to a light mint, and the dome is
+brightened with its hue intact. `BrandLogo` picks the variant from the colour
+scheme.
+
+## Settings layout
+
+Each setting is editable in exactly one place. An audit of every stored
+preference against the UI found six controls duplicated across two sections —
+calculation method, madhab, location mode, launch at login, notifications and
+the per-prayer toggles — which meant two live controls could disagree on screen.
+
+`General` is now a dashboard: it *summarises* the place, method and notification
+state and links to the section that owns each one, rather than editing them a
+second time. The only controls it holds are Startup (launch at login).
+
+Sections are: General, Prayer Times, Notifications, Location, Appearance,
+Menubar, Focus, About.
+
+### Settings that did nothing
+
+The same audit found five preferences that were stored and displayed but never
+consulted, or never shown at all:
+
+| setting | problem | resolution |
+| --- | --- | --- |
+| all five Focus settings | `FocusSection` had been dropped from the section list, so Focus Mode was unconfigurable | section restored |
+| `focusBlurIntensity` | never read | drives the overlay material (thin/regular/thick) |
+| `focusEmergencyExit` | never read | gates the ⌘⎋ monitor |
+| `showIshraq` | bound, no effect | renders the Ishraq row after sunrise |
+| `hijriDayAdjustment` | bound, no effect — the calculator hardcoded 0 and the API path ignored it | applied on both paths, with a self-test |
+| `language` | bound, no effect; there is no localisation | setting and enum removed rather than left as decoration |
+
+## Full-screen prayer reminder
+
+At each prayer the app covers the screen with a notice rather than only posting a
+banner: the prayer name, its time, the place and Hijri date, a short saying on
+the merit of salah, and Dismiss / Snooze / Mute-Adhan-Today.
+
+- **Backdrop per prayer.** Five images, one per prayer, chosen because the light
+  in each matches the time of day: first light for Fajr, bright midday for Dhuhr,
+  golden hour for Asr, sun on the horizon for Maghrib, and night for Isha.
+- **Quotes are short and referenced.** Ten sayings — seven ahadith and three
+  Qur'anic verses — taken from the QuranExplorer compilation on the merit of
+  salah, quoted rather than paraphrased. A self-test fails if any grows past 160
+  characters or loses its reference, and the same saying never appears twice in a
+  row. Narrators are omitted where the source does not give one, rather than
+  invented.
+- **Text contrast is tuned per backdrop.** Dark text on a light wash; the night
+  image needs a much stronger wash than the daylight ones.
+- **Dismiss is the primary action**: a filled 480x76 button on the emerald ink,
+  centred, with Snooze and Mute Adhan Today as smaller secondary pills beneath
+  it. It is also bound to Return, and Escape always dismisses.
+- Snooze re-shows after the configured interval. "Mute Adhan Today" stops the
+  adhan audio until midnight.
+
+The reminder's window is a borderless `NSWindow`, and those return
+`canBecomeKey == false` by default — so the window could never take key focus and
+Escape and Return were dead. It is an `AlertWindow` subclass that overrides both
+`canBecomeKey` and `canBecomeMain`. `SAJDA_DEBUG=1` logs whether the window
+actually became key.
+
+Focus Mode and the reminder do not stack: while the reminder is up, the focus
+overlay is suppressed for that prayer.
+
+**One window per display.** A single window spanning the union of all screens
+centred the content *across* them, which put it low on whichever display the
+person was actually looking at, and forced the photograph to zoom hard into its
+centre. Each screen now gets its own window, composed for its own aspect ratio.
+
+### Testing it
+
+Easiest is **Notifications › Test the full-screen reminder**: pick a prayer and
+press Preview. Each prayer has its own backdrop, so pick a few to see them all.
+
+From a terminal, with the app quit:
+
+```bash
+open --env SAJDA_TEST_ALERT=isha "/Applications/Sajda Time.app"
+```
+
+To exercise the real timed path rather than the view alone, set **Prayer Times ›
+Time source** to *Manual (fixed)* and enter a time about a minute ahead; the
+reminder fires through the same code as a normal prayer.
+
+With `SAJDA_DEBUG=1` the app logs `reminder shown for <prayer>, quote=<id>,
+backdrop=<name>` when it appears.
+
+### Sourcing note
+
+The ahadith and their references come from
+[QuranExplorer](https://www.quranexplorer.com/blog/merit-of-surah/Importance_of_salah_(prayer)_according_to_the_Quran_and_Hadith),
+one of the two pages suggested. [sunnah.com](https://sunnah.com/bukhari/8) could
+not be used: it answers automated requests with HTTP 403 behind a Cloudflare
+challenge, so nothing here was taken from it or checked against it.
+
+## The settings sidebar
+
+The section icons are outlined throughout, at a single weight and a fixed 22pt
+column so every label starts on the same edge. Selection is carried by the tinted
+pill, the label's weight and the accent colour rather than by the glyph.
+
+They used to be a mix: every row was a `.fill` symbol except Menubar, which was
+outlined — because there is no filled menubar symbol. `menubar.rectangle.fill`
+does not exist, and both near-misses (`rectangle.topthird.inset.filled` and
+`rectangle.inset.filled`) are hollow at 14pt, so one outlined glyph sat among
+solid ones and read as a mistake. Rather than force a wrong symbol, the set is
+outlined, which makes every stroke match and keeps Menubar's proper glyph.
+
+## The menu bar panel
+
+The row of glass pills that used to sit under the prayer list (Calendar,
+Settings, Reminders, and Qibla where a magnetometer exists) has been removed.
+Those destinations are now small icons in the panel header: calendar, settings,
+and Qibla only on a machine that reports a heading. The overflow menu keeps
+refresh, detect location and quit.
+
+That took the popover from 761pt to 674pt, and the footer still carries the
+calculation method and madhab.
+
+## Typography and ink
+
+Everything is set in the macOS system faces — no bundled or third-party fonts.
+That gives three designs to work with, and each has one job:
+
+| design | face | used for |
+| --- | --- | --- |
+| `.serif` | New York | the prayer name, the subtitle and the hadith |
+| `.rounded` | SF Rounded | the time, the metadata line, labels and buttons |
+| `.default` | SF Pro | body text elsewhere in the app |
+
+Within those, the display type is tuned rather than left at defaults: New York
+Bold at 78pt with −1.6 tracking for the prayer name, the hadith at 27pt with 11pt
+line spacing, and small positive tracking on the reference and metadata lines so
+they hold up at small sizes.
+
+Display text uses `Palette.greenInk`, a deep emerald (`#0B3E2D`), rather than the
+mid-green used for the app mark. It reads as near-black at a glance while staying
+clearly green, and it is dark enough to sit on the pale banner and on the
+reminder's washed backdrops without losing contrast. Large headings take
+`inkGradient`, a short vertical gradient, since a flat fill looks thin at
+heading sizes.
+
+`greenDeep` is kept for the app mark's gradient and for shadows, so darkening the
+text did not dull the mark.
+
+## Clock format
+
+`Appearance › Clock` switches every time in the app between 12-hour
+("5:24 PM") and 24-hour ("17:24"). All formatting goes through
+`TimeFormatting` in the core module, so the panel, the settings preview and the
+menu bar cannot drift apart, and the preference is asserted in the self-test.
+
+## Design decisions worth knowing
+
+**Times come from three places, in order:** a cached day fetched earlier from
+Aladhan, a fresh Aladhan fetch, then on-device calculation. The panel always
+shows which one you are looking at, so a value is never silently stale.
+
+**Method offsets are real.** Several conventions (Diyanet, Morocco, Dubai,
+Lisbon, Jordan) apply fixed minute offsets internally, and Lisbon and Jordan
+define Maghrib/Isha as intervals rather than solar angles. These were measured
+against the live API and encoded, which is what brings the worst case down from
+7 minutes to 2. They are applied to the offline calculation only — Aladhan
+applies its own.
+
+**Computed times match fetched times**, so switching between them does not move
+the times. That includes the high-latitude rule: `Automatic` follows Aladhan's
+angle-based default, because using "middle of the night" instead made Fajr and
+Isha jump by over an hour at polar latitudes.
+
+**First launch seeds the location from the system timezone.** A hard-coded
+default city is wrong for almost everyone: the first build shipped with
+Istanbul's coordinates, so a user in Dhaka saw Istanbul's prayer times rendered
+on the Dhaka clock. Settings are now seeded from a timezone-to-city table, marked
+as *estimated*, and the app asks CoreLocation for the real position right away.
+The panel says when a position is only an estimate.
+
+```swift
+let settings = AppSettings.fresh(for: .current)   // Asia/Dhaka -> Dhaka, BD
+```
+
+**The popover is given an explicit content size.** Handing `NSPopover` a
+`NSHostingController` without `sizingOptions = [.preferredContentSize]` left it
+positioning itself from a stale fitting size, which placed the panel over the menu
+bar and clipped its top. The panel now reports 320x445 and the popover matches it
+exactly, with a guard that pushes the panel back under the bar if AppKit ever
+places it too high.
+
+**The whole app lifecycle is AppKit, not SwiftUI.** SwiftUI's scene machinery
+failed twice on this shape of app: a `MenuBarExtra` label that would not render
+its countdown, and a `Settings` scene that would not open for an accessory
+(`LSUIElement`) app — `showSettingsWindow:` resolved without a window appearing.
+The status item and the settings window are now created and shown explicitly, and
+SwiftUI is used only for view content inside `NSHostingController`. The settings
+window also promotes the app to `.regular` while it is open, because a pure
+accessory app is refused key-window status and the window would not take clicks.
+
+**The menu bar item is AppKit, not SwiftUI.** `MenuBarExtra`'s label did not
+render the countdown — the item showed the icon and nothing else. A status item
+whose `button.title` we set ourselves is both reliable and *verifiable*: with
+`SAJDA_DEBUG=1` the app logs the exact string it sets, and
+`MenuBarComposer` is asserted in the self-test, so a countdown that stops
+appearing fails a test instead of failing silently on screen.
+
+**Remaining time is the prayer's own window, not the gap to the next prayer.**
+Fajr's valid time ends at sunrise — roughly an hour — not at Dhuhr, and Isha's
+chosen time ends at Islamic midnight, with midnight to Fajr reported separately
+as the time of necessity (darurah). Both of those come from the classical
+boundaries, and getting the first one wrong overstated Fajr's remaining time by
+several hours. Between sunrise and Dhuhr, and between midnight and Fajr, no
+prayer is in its chosen time, so the app counts down to the next one instead.
+
+```
+prayer    starts   ends     duration  ends at
+Fajr      04:37    05:53     75 min   sunrise
+Dhuhr     11:45    15:59    254 min   Asr
+Asr       15:59    17:37     98 min   Maghrib
+Maghrib   17:37    18:53     75 min   Isha
+Isha      18:53    23:45    292 min   Islamic midnight
+          (time of necessity until 04:38)
+```
+
+Use `sajdactl countdown <lat> <lng> <tz>` to print what the menu bar would
+show at every half hour of the day.
+
+**The cache stores prayer names, not array positions**, so reordering the
+`Prayer` enum cannot silently mis-decode old cache entries.
+
+## Settings storage
+
+Preferences live under `app.local.sajda.settings.v2`. The key is versioned
+because a schema change makes an older blob undecodable, and silently keeping it
+would carry forward a wrong location; bumping the key starts from timezone-seeded
+defaults instead.
+
+## Known limitations
+
+- **Moonsighting Committee Worldwide is not offered.** It applies a seasonal
+  correction table this engine does not implement, and it produced times 15–30
+  minutes out. Shipping it would have been worse than omitting it. Use MWL, or
+  enable live fetching to get Aladhan's own values.
+- **Asr at extreme latitudes can differ by ~20 minutes.** At places like
+  Svalbard in early winter the sun barely clears the Asr altitude, so the result
+  is inherently ill-conditioned: a tenth of a degree of declination is worth
+  many minutes. Everywhere the sun actually climbs, agreement is within a
+  minute.
+- **Polar day and night use a mid-latitude reference (45°).** When there is no
+  sunrise or sunset, the angle-based times are substituted from a mid-latitude
+  day and the panel says so. Aladhan collapses these to a single repeated value
+  instead.
+- **Notification sounds must live in the app bundle**, so prayer-time audio uses
+  the standard macOS alert sounds plus an optional audio file you choose for the
+  full adhan. No adhan recording is bundled.
+- **"Check for Updates" is not implemented** — there is no update feed for this
+  build, so the panel offers "Refresh Times" instead of a menu item that would
+  do nothing.
+- **Launch at login** uses `SMAppService` and works best when the app lives in
+  `/Applications`.
