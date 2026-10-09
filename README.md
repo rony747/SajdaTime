@@ -86,7 +86,7 @@ cd SajdaTime
 ==> Building sajdactl
 ==> Building SajdaTime app binary
 ==> Assembling app bundle
-    version: 2.9.0 (build 23)
+    version: 2.9.0 (build N)
     icon: AppIcon.icns generated
     signed (ad-hoc)
 
@@ -94,7 +94,9 @@ cd SajdaTime
   App : dist/Sajda Time.app
 ```
 
-A clean release build takes about 25 seconds. To install it:
+A clean release build takes about 25 seconds. The version comes from
+`./VERSION` and `N` is the commit count, stamped into the bundle at build time.
+To install it:
 
 ```bash
 rm -rf "/Applications/Sajda Time.app"
