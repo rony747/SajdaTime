@@ -19,6 +19,7 @@ struct PanelView: View {
 
     @State private var page: PanelPage = .main
     @State private var selection: Prayer?
+    @Environment(\.colorScheme) private var scheme
 
     private var zone: TimeZone { state.settings.displayTimeZone }
 
@@ -141,10 +142,11 @@ struct PanelView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 8)
 
-                // The artwork has its own band so it can never sit under the text.
+                // The artwork has its own band so it can never sit under the
+                // text, and fills the full width so it reads as a background.
                 BannerArt()
-                    .frame(height: 58)
                     .frame(maxWidth: .infinity)
+                    .frame(height: 72)
                     .clipped()
             }
             .background(Palette.bannerGradient)
@@ -199,7 +201,7 @@ struct PanelView: View {
                     Text(TimeFormatting.countdown(window.remaining(at: state.now)))
                         .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                         .monospacedDigit()
-                        .foregroundStyle(Palette.greenDeep)
+                        .foregroundStyle(Palette.accentText(scheme))
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
                         .background(Capsule().fill(Palette.green.opacity(0.18)))

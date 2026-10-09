@@ -25,6 +25,21 @@ enum Palette {
         }
     }
 
+    /// Readable green for text sitting on a surface that follows the scheme.
+    ///
+    /// `greenDeep` is correct on the pale banner, but on a dark card or a
+    /// dark-tinted row it became dark-on-dark and disappeared.
+    static func accentText(_ scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 0.49, green: 0.88, blue: 0.63)
+            : greenDeep
+    }
+
+    /// Fill for a selected row or pill.
+    static func selectionFill(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? green.opacity(0.26) : greenSoft
+    }
+
     static var markGradient: LinearGradient {
         LinearGradient(
             colors: [Color(red: 0.30, green: 0.78, blue: 0.47), greenDeep],
@@ -160,15 +175,16 @@ struct BrandLogo: View {
 
 /// Landscape artwork for the next-prayer surfaces.
 ///
-/// Fits rather than fills: `fill` scaled the artwork past its frame and, with no
-/// clipping, it drew over the text above it.
+/// Fills rather than fits, so the illustration spans the full width and reads as
+/// a background instead of a picture floating in the middle of the card. Callers
+/// must clip, otherwise it overflows its band and draws over the text above it.
 struct BannerArt: View {
     var body: some View {
         if let image = NSImage(named: "banner") {
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
-                .aspectRatio(contentMode: .fit)
+                .aspectRatio(contentMode: .fill)
         } else {
             SkylineSilhouette()
         }

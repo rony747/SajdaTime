@@ -97,7 +97,7 @@ Tests/SajdaCoreTests/ XCTest wrapper around the shared self-test
 | --- | --- |
 | `appicon.png` | the app icon, the menu bar-adjacent mark and the panel header |
 | `logo.png` / `logo-dark.png` | the wordmark, per colour scheme |
-| `banner.png` | the artwork behind the next-prayer banner and the General summary |
+| `banner.png` | the artwork behind the next-prayer banner and the General summary. It **fills** its band edge to edge and is clipped, so it reads as a background rather than a picture floating in the middle of the card. |
 
 `AppIcon.icns` is generated from `appicon.png` by `build.sh` rather than
 committed, so the icon has one source of truth. The icon master sits on Apple's

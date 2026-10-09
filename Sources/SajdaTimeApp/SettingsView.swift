@@ -76,6 +76,10 @@ struct SettingsView: View {
     var body: some View {
         SettingsChrome(state: state, section: section, onSelect: { section = $0 })
         .frame(width: 880, height: 640)
+        // The window is a full-size content view, so SwiftUI insets the top by
+        // the titlebar height on top of our own padding, which left a large gap
+        // above the heading. The sidebar carries its own clearance instead.
+        .ignoresSafeArea(.container, edges: .top)
         // Glass alone let the desktop through far too strongly, which hurt
         // contrast in dark mode. The scrim is deliberately asymmetric: dark mode
         // needs a firm base for light text, while light mode needs very little or
@@ -120,14 +124,17 @@ struct SettingsSidebar: View {
     let section: SettingsSection
     let onSelect: (SettingsSection) -> Void
 
+    @Environment(\.colorScheme) private var scheme
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             BrandLogo(width: 178)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
             .padding(.horizontal, 14)
-            .padding(.top, 34)
-            .padding(.bottom, 16)
+            // Clears the window's traffic lights, which now overlay the content.
+            .padding(.top, 40)
+            .padding(.bottom, 14)
 
             VStack(spacing: 3) {
                 ForEach(SettingsSection.allCases) { item in
@@ -151,17 +158,17 @@ struct SettingsSidebar: View {
                 Image(systemName: item.symbol)
                     .font(.system(size: 13))
                     .frame(width: 20)
-                    .foregroundStyle(selected ? Palette.greenDeep : Color.secondary)
+                    .foregroundStyle(selected ? Palette.accentText(scheme) : Color.secondary)
                 Text(item.title)
                     .font(.system(size: 13, weight: selected ? .semibold : .regular))
-                    .foregroundStyle(selected ? Palette.greenDeep : Color.primary)
+                    .foregroundStyle(selected ? Palette.accentText(scheme) : Color.primary)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 11)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(selected ? Palette.greenSoft : Color.clear)
+                    .fill(selected ? Palette.selectionFill(scheme) : Color.clear)
             )
             .contentShape(Rectangle())
         }

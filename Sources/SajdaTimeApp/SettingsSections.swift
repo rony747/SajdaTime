@@ -119,10 +119,11 @@ struct SummaryCard: View {
             .padding(.top, 16)
             .padding(.bottom, 12)
 
-            // Artwork gets its own band, so it can never overlap the text.
+            // Full-width band, so the illustration reads as a background rather
+            // than a picture centred in the card.
             BannerArt()
-                .frame(height: 96)
                 .frame(maxWidth: .infinity)
+                .frame(height: 120)
                 .clipped()
         }
         .background(Palette.bannerGradient)
@@ -625,6 +626,7 @@ struct LocationSection: View {
 
 struct AppearanceSection: View {
     @ObservedObject var state: AppState
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         SettingsCard(title: "Appearance", symbol: "circle.lefthalf.filled") {
@@ -644,7 +646,8 @@ struct AppearanceSection: View {
                             Text(option.displayName)
                                 .font(.system(size: 11, design: .rounded))
                         }
-                        .foregroundStyle(state.settings.appearance == option ? Palette.greenDeep : Color.secondary)
+                        .foregroundStyle(state.settings.appearance == option
+                                         ? Palette.accentText(scheme) : Color.secondary)
                     }
                     Spacer()
                 }
