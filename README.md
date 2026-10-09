@@ -8,7 +8,7 @@
 
 <img src="docs/images/reminder.jpg" width="720" alt="The full-screen prayer reminder">
 <img src="docs/images/panel.png" width="360" alt="The menu bar panel">
-<img src="docs/images/settings.png" width="440" alt="Settings">
+<img src="docs/images/settings-general.png" width="440" alt="Settings">
 
 </div>
 
