@@ -1,0 +1,75 @@
+import AppKit
+import UserNotifications
+import PrayerCore
+
+/// PrayerBar — a menu bar app.
+///
+/// Deliberately a plain AppKit application rather than a SwiftUI `App`. SwiftUI's
+/// scene machinery proved unreliable for this shape of app twice over: a
+/// `MenuBarExtra` label that would not render its countdown, and a `Settings`
+/// scene that would not open for an accessory (LSUIElement) app. Both the status
+/// item and the settings window are now created and shown explicitly, and SwiftUI
+/// is used only for view content, hosted in AppKit containers.
+@main
+enum PrayerBarMain {
+    static func main() {
+        let application = NSApplication.shared
+        let delegate = AppDelegate()
+        application.delegate = delegate
+        application.setActivationPolicy(.accessory)
+        application.run()
+    }
+}
+
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
+
+    let state = AppState()
+    private var statusItem: StatusItemController?
+    private var settingsWindow: SettingsWindowController?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Show notifications even when the app is frontmost, otherwise the
+        // sample button appears to do nothing while the Settings window is open.
+        UNUserNotificationCenter.current().delegate = self
+
+        NSApp.setActivationPolicy(.accessory)
+
+        statusItem = StatusItemController(state: state) { [weak self] in
+            self?.openSettings()
+        }
+
+        if ProcessInfo.processInfo.environment["PRAYERBAR_OPEN_SETTINGS"] == "1" {
+            openSettings()
+        }
+        if ProcessInfo.processInfo.environment["PRAYERBAR_OPEN_POPOVER"] == "1" {
+            // Deferred so the status item has been laid out by the bar.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.statusItem?.showPopover()
+            }
+        }
+    }
+
+    /// Reopening an already-running menu bar app has nowhere obvious to go.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { openSettings() }
+        return true
+    }
+
+    /// Show the settings window. This is the only path — there is no SwiftUI
+    /// `Settings` scene involved, so if this runs, the window appears.
+    func openSettings() {
+        if settingsWindow == nil {
+            settingsWindow = SettingsWindowController(state: state)
+        }
+        settingsWindow?.show()
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
+    }
+}
