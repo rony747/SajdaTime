@@ -27,19 +27,23 @@ public enum PrayerCalculator {
         public var elevation: Double
         /// Extra per-prayer tuning in minutes, applied on top of the method.
         public var userAdjustments: [String: Double]
+        /// Days to shift the Hijri date, for local moon sighting.
+        public var hijriAdjustment: Int
 
         public init(
             method: CalculationMethod,
             madhab: Madhab = .standard,
             highLatitudeRule: HighLatitudeRule = .automatic,
             elevation: Double = 0,
-            userAdjustments: [String: Double] = [:]
+            userAdjustments: [String: Double] = [:],
+            hijriAdjustment: Int = 0
         ) {
             self.method = method
             self.madhab = madhab
             self.highLatitudeRule = highLatitudeRule
             self.elevation = elevation
             self.userAdjustments = userAdjustments
+            self.hijriAdjustment = hijriAdjustment
         }
     }
 
@@ -202,7 +206,7 @@ public enum PrayerCalculator {
             methodName: options.method.name,
             timeZoneIdentifier: timeZone.identifier,
             coordinate: coordinate,
-            hijri: HijriDate(from: dayStart, calendar: hijriCalendar, adjustment: 0),
+            hijri: HijriDate(from: dayStart, calendar: hijriCalendar, adjustment: options.hijriAdjustment),
             usedPolarFallback: usedPolarFallback
         )
     }

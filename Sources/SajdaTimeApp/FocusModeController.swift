@@ -42,7 +42,12 @@ final class FocusModeController: ObservableObject {
             lastTriggeredKey = key
 
             guard !isPresentingFullScreen() else { return }
-            activate(prayer: prayer, duration: window)
+            activate(
+                prayer: prayer,
+                duration: window,
+                intensity: settings.focusBlurIntensity,
+                allowsEscape: settings.focusEmergencyExit
+            )
             return
         }
     }
@@ -72,11 +77,16 @@ final class FocusModeController: ObservableObject {
 
     // MARK: - Session control
 
-    func activate(prayer: Prayer, duration: TimeInterval) {
+    func activate(
+        prayer: Prayer,
+        duration: TimeInterval,
+        intensity: BlurIntensity = .medium,
+        allowsEscape: Bool = true
+    ) {
         guard !isActive else { return }
         isActive = true
         activePrayer = prayer
-        showOverlay(prayer: prayer, duration: duration)
+        showOverlay(prayer: prayer, duration: duration, intensity: intensity, allowsEscape: allowsEscape)
     }
 
     /// "Try it for 10 seconds" from Settings.
@@ -85,7 +95,7 @@ final class FocusModeController: ObservableObject {
         isPreview = true
         isActive = true
         activePrayer = nil
-        showOverlay(prayer: nil, duration: duration)
+        showOverlay(prayer: nil, duration: duration, intensity: .medium, allowsEscape: true)
     }
 
     func dismiss() {
@@ -104,7 +114,12 @@ final class FocusModeController: ObservableObject {
 
     // MARK: - Overlay window
 
-    private func showOverlay(prayer: Prayer?, duration: TimeInterval) {
+    private func showOverlay(
+        prayer: Prayer?,
+        duration: TimeInterval,
+        intensity: BlurIntensity,
+        allowsEscape: Bool
+    ) {
         let frame = NSScreen.screens.reduce(CGRect.zero) { $0.union($1.frame) }
 
         let window = NSWindow(
@@ -123,6 +138,7 @@ final class FocusModeController: ObservableObject {
         let content = FocusOverlayView(
             prayer: prayer,
             duration: duration,
+            intensity: intensity,
             onFinish: { [weak self] in self?.dismiss() }
         )
         window.contentView = NSHostingView(rootView: content)
@@ -133,14 +149,16 @@ final class FocusModeController: ObservableObject {
 
         self.window = window
 
-        // Emergency exit.
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            // ⌘⎋
-            if event.keyCode == 53 && event.modifierFlags.contains(.command) {
-                self?.dismiss()
-                return nil
+        // Emergency exit, only when the user has left it enabled.
+        if allowsEscape {
+            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                // ⌘⎋
+                if event.keyCode == 53 && event.modifierFlags.contains(.command) {
+                    self?.dismiss()
+                    return nil
+                }
+                return event
             }
-            return event
         }
 
         dismissTask = Task { @MainActor [weak self] in
@@ -156,16 +174,27 @@ final class FocusModeController: ObservableObject {
 private struct FocusOverlayView: View {
     let prayer: Prayer?
     let duration: TimeInterval
+    let intensity: BlurIntensity
     let onFinish: () -> Void
 
     @State private var remaining: TimeInterval
     @State private var appeared = false
 
-    init(prayer: Prayer?, duration: TimeInterval, onFinish: @escaping () -> Void) {
+    init(prayer: Prayer?, duration: TimeInterval, intensity: BlurIntensity, onFinish: @escaping () -> Void) {
         self.prayer = prayer
         self.duration = duration
+        self.intensity = intensity
         self.onFinish = onFinish
         _remaining = State(initialValue: duration)
+    }
+
+    /// The backdrop is the one thing the intensity setting controls.
+    private var material: Material {
+        switch intensity {
+        case .light: return .thinMaterial
+        case .medium: return .regularMaterial
+        case .heavy: return .thickMaterial
+        }
     }
 
     var body: some View {
@@ -173,7 +202,7 @@ private struct FocusOverlayView: View {
             // A material keeps the underlying desktop perceptible but unusable,
             // which is the point: present, not hidden.
             Rectangle()
-                .fill(.ultraThinMaterial)
+                .fill(material)
                 .ignoresSafeArea()
 
             VStack(spacing: 18) {

@@ -50,7 +50,8 @@ public struct AladhanClient: Sendable {
         method: CalculationMethod,
         madhab: Madhab,
         highLatitudeRule: HighLatitudeRule,
-        adjustments: [String: Double] = [:]
+        adjustments: [String: Double] = [:],
+        hijriAdjustment: Int = 0
     ) async throws -> PrayerTimes {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
@@ -88,7 +89,14 @@ public struct AladhanClient: Sendable {
             throw AladhanError.badStatus(http.statusCode)
         }
 
-        return try Self.parse(data: data, fallbackCoordinate: coordinate, fallbackMethod: method, requestedDay: date, timeZone: timeZone)
+        return try Self.parse(
+            data: data,
+            fallbackCoordinate: coordinate,
+            fallbackMethod: method,
+            requestedDay: date,
+            timeZone: timeZone,
+            hijriAdjustment: hijriAdjustment
+        )
     }
 
     // MARK: - Response decoding
@@ -131,7 +139,8 @@ public struct AladhanClient: Sendable {
         fallbackCoordinate: Coordinate,
         fallbackMethod: CalculationMethod,
         requestedDay: Date,
-        timeZone: TimeZone
+        timeZone: TimeZone,
+        hijriAdjustment: Int = 0
     ) throws -> PrayerTimes {
         let decoder = JSONDecoder()
         guard let envelope = try? decoder.decode(Envelope.self, from: data) else {
@@ -179,7 +188,20 @@ public struct AladhanClient: Sendable {
 
         var hijri: HijriDate?
         if let h = envelope.data.date?.hijri, let hDay = Int(h.day), let hYear = Int(h.year) {
-            hijri = HijriDate(day: hDay, monthIndex: h.month.number, year: hYear, adjustment: 0)
+            // Shift the returned date rather than recomputing it, so the
+            // adjustment applies to live times too.
+            if hijriAdjustment == 0 {
+                hijri = HijriDate(day: hDay, monthIndex: h.month.number, year: hYear, adjustment: 0)
+            } else if var base = locationCalendar.date(from: DateComponents(year: hYear, month: h.month.number, day: hDay)) {
+                base = locationCalendar.date(byAdding: .day, value: hijriAdjustment, to: base) ?? base
+                let shifted = locationCalendar.dateComponents([.day, .month, .year], from: base)
+                hijri = HijriDate(
+                    day: shifted.day ?? hDay,
+                    monthIndex: shifted.month ?? h.month.number,
+                    year: shifted.year ?? hYear,
+                    adjustment: hijriAdjustment
+                )
+            }
         }
 
         return PrayerTimes(

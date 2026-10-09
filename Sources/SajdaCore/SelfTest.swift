@@ -22,6 +22,13 @@ public enum SajdaCoreSelfTest {
     public static func run() -> [SelfTestFailure] {
         var failures: [SelfTestFailure] = []
 
+        func formatter(zone: String, _ day: String) -> Date {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd"
+            f.timeZone = TimeZone(identifier: zone)
+            return f.date(from: day)!
+        }
+
         func check(_ name: String, _ condition: Bool, _ detail: @autoclosure () -> String = "") {
             if !condition {
                 failures.append(SelfTestFailure(name: name, detail: detail()))
@@ -330,6 +337,25 @@ public enum SajdaCoreSelfTest {
         check("clock.range24",
               TimeFormatting.clockRange(at(5, 24), at(6, 43), timeZone: zone, format: .twentyFourHour) == "05:24 – 06:43",
               "got \(TimeFormatting.clockRange(at(5, 24), at(6, 43), timeZone: zone, format: .twentyFourHour))")
+
+        // 21. The Hijri day adjustment must actually shift the date; it was
+        //     bound in settings but never applied.
+        let unadjusted = PrayerCalculator.calculate(
+            date: formatter(zone: "Asia/Dhaka", "2026-06-15"),
+            coordinate: Coordinate(latitude: 23.8103, longitude: 90.4125),
+            timeZone: TimeZone(identifier: "Asia/Dhaka")!,
+            options: .init(method: CalculationMethod.method(id: "KARACHI"), hijriAdjustment: 0)
+        )
+        let adjusted = PrayerCalculator.calculate(
+            date: formatter(zone: "Asia/Dhaka", "2026-06-15"),
+            coordinate: Coordinate(latitude: 23.8103, longitude: 90.4125),
+            timeZone: TimeZone(identifier: "Asia/Dhaka")!,
+            options: .init(method: CalculationMethod.method(id: "KARACHI"), hijriAdjustment: 1)
+        )
+        check("hijri.adjustmentApplied",
+              unadjusted.hijri?.day != adjusted.hijri?.day || unadjusted.hijri?.monthIndex != adjusted.hijri?.monthIndex,
+              "adjustment had no effect: both \(String(describing: unadjusted.hijri))")
+        check("hijri.adjustmentRecorded", adjusted.hijri?.adjustment == 1)
 
         return failures
     }

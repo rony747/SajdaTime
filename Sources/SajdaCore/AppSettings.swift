@@ -227,18 +227,6 @@ public enum FocusTrigger: String, Codable, CaseIterable, Sendable {
     }
 }
 
-public enum AppLanguage: String, Codable, CaseIterable, Sendable {
-    case system
-    case english
-
-    public var displayName: String {
-        switch self {
-        case .system: return "Follow system"
-        case .english: return "English"
-        }
-    }
-}
-
 // MARK: - Settings
 
 /// Everything the user can configure. Pure data so it can be persisted,
@@ -284,7 +272,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var clockFormat: ClockFormat
     /// Light, dark, or follow the system.
     public var appearance: AppAppearance
-    public var language: AppLanguage
 
     // Notifications
     public var notificationsEnabled: Bool
@@ -331,7 +318,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
         showHijriDate: Bool = true,
         clockFormat: ClockFormat = .twelveHour,
         appearance: AppAppearance = .system,
-        language: AppLanguage = .system,
         notificationsEnabled: Bool = true,
         defaultSoundName: String = "Soft chime",
         playFullAdhan: Bool = false,
@@ -370,7 +356,6 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.showHijriDate = showHijriDate
         self.clockFormat = clockFormat
         self.appearance = appearance
-        self.language = language
         self.notificationsEnabled = notificationsEnabled
         self.defaultSoundName = defaultSoundName
         self.playFullAdhan = playFullAdhan
@@ -466,7 +451,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
             madhab: madhab,
             highLatitudeRule: highLatitudeRule,
             elevation: elevation,
-            userAdjustments: userAdjustments
+            userAdjustments: userAdjustments,
+            hijriAdjustment: hijriDayAdjustment
         )
     }
 }

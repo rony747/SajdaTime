@@ -177,7 +177,40 @@ struct PanelView: View {
         VStack(spacing: 6) {
             ForEach(Prayer.allCases, id: \.self) { prayer in
                 prayerRow(prayer)
+                if prayer == .sunrise, state.settings.showIshraq {
+                    ishraqRow()
+                }
             }
+        }
+    }
+
+    /// Ishraq is the voluntary prayer about twenty minutes after sunrise. It is
+    /// derived rather than stored, and only shown when asked for.
+    @ViewBuilder
+    private func ishraqRow() -> some View {
+        if let sunrise = state.today?.times[.sunrise] {
+            let time = sunrise.addingTimeInterval(20 * 60)
+            HStack(spacing: 10) {
+                Image(systemName: "sun.horizon.fill")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Palette.amber.opacity(0.75))
+                    .frame(width: 22)
+                Text("Ishraq")
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 8)
+                Text(state.settings.clock(time))
+                    .font(.system(size: 14, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.primary.opacity(0.03))
+            )
+            .help("Ishraq: about 20 minutes after sunrise, once the sun has risen clear of the horizon.")
         }
     }
 

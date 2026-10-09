@@ -42,7 +42,8 @@ public struct PrayerTimesStore: Sendable {
                     highLatitudeRule: settings.highLatitudeRule,
                     // Only the user's own tuning is sent; Aladhan already applies
                     // whatever the chosen method specifies internally.
-                    adjustments: settings.userAdjustments
+                    adjustments: settings.userAdjustments,
+                    hijriAdjustment: settings.hijriDayAdjustment
                 )
                 cache.save(fetched, key: key)
                 return fetched

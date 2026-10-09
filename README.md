@@ -226,6 +226,34 @@ image), the wordmark and tagline are recoloured to a light mint, and the dome is
 brightened with its hue intact. `BrandLogo` picks the variant from the colour
 scheme.
 
+## Settings layout
+
+Each setting is editable in exactly one place. An audit of every stored
+preference against the UI found six controls duplicated across two sections —
+calculation method, madhab, location mode, launch at login, notifications and
+the per-prayer toggles — which meant two live controls could disagree on screen.
+
+`General` is now a dashboard: it *summarises* the place, method and notification
+state and links to the section that owns each one, rather than editing them a
+second time. The only controls it holds are Startup (launch at login).
+
+Sections are: General, Prayer Times, Notifications, Location, Appearance,
+Menubar, Focus, About.
+
+### Settings that did nothing
+
+The same audit found five preferences that were stored and displayed but never
+consulted, or never shown at all:
+
+| setting | problem | resolution |
+| --- | --- | --- |
+| all five Focus settings | `FocusSection` had been dropped from the section list, so Focus Mode was unconfigurable | section restored |
+| `focusBlurIntensity` | never read | drives the overlay material (thin/regular/thick) |
+| `focusEmergencyExit` | never read | gates the ⌘⎋ monitor |
+| `showIshraq` | bound, no effect | renders the Ishraq row after sunrise |
+| `hijriDayAdjustment` | bound, no effect — the calculator hardcoded 0 and the API path ignored it | applied on both paths, with a self-test |
+| `language` | bound, no effect; there is no localisation | setting and enum removed rather than left as decoration |
+
 ## Clock format
 
 `Appearance › Clock` switches every time in the app between 12-hour

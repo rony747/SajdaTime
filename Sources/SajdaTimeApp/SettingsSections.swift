@@ -3,7 +3,6 @@ import UniformTypeIdentifiers
 import SajdaCore
 
 // MARK: - General
-
 struct GeneralSection: View {
     @ObservedObject var state: AppState
     let goTo: (SettingsSection) -> Void
@@ -11,69 +10,60 @@ struct GeneralSection: View {
     var body: some View {
         SummaryCard(state: state, goTo: goTo)
 
+        // These cards summarise and link. The controls live in one place each —
+        // having the same value editable in two sections made it unclear which
+        // was authoritative, and they could disagree on screen at the same time.
         SettingsCard(title: "Location", symbol: "mappin.circle.fill") {
-            CardRow("Automatically detect my location") {
-                GreenToggle(isOn: Binding(
-                    get: { state.settings.locationMode == .automatic },
-                    set: { state.settings.locationMode = $0 ? .automatic : .manual }
-                ))
-            }
-            CardRow("Location") {
+            CardRow(
+                "Place",
+                subtitle: state.settings.locationIsEstimated
+                    ? "Estimated from your timezone until a fix arrives"
+                    : "Detected"
+            ) {
                 HStack(spacing: 8) {
-                    GreenPicker(
-                        options: [(state.settings.locationName.isEmpty ? "Unknown" : state.settings.locationName,
-                                   state.settings.locationName.isEmpty ? "Unknown" : state.settings.locationName)],
-                        selection: .constant(state.settings.locationName),
-                        width: 210
-                    )
-                    CardButton(title: "Detect Again", systemImage: "location.fill") {
-                        state.location.detectLocation()
-                    }
-                    .disabled(state.location.isLocating)
+                    Text(state.settings.locationName.isEmpty ? "Unknown" : state.settings.locationName)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    CardButton(title: "Change…") { goTo(.location) }
                 }
-            }
-            if let message = state.location.errorMessage {
-                StatusLine(text: message, kind: .warning)
             }
         }
 
         SettingsCard(title: "Prayer Times", symbol: "clock.fill") {
-            CardRow("Calculation Method") {
-                GreenPicker(
-                    options: CalculationMethod.all.map { ($0.id, $0.name) },
-                    selection: state.binding(\.methodID),
-                    width: 250
-                )
+            CardRow("Calculation method") {
+                Text(state.settings.method.name)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             CardRow("Madhab (Asr)") {
-                GreenSegmented(
-                    options: [(Madhab.standard, "Shafi'i"), (Madhab.hanafi, "Hanafi")],
-                    selection: state.binding(\.madhab)
-                )
-                .frame(width: 240)
+                HStack(spacing: 8) {
+                    Text(state.settings.madhab == .hanafi ? "Hanafi" : "Shafi'i")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    CardButton(title: "Change…") { goTo(.prayerTimes) }
+                }
             }
         }
 
-        NotificationsSummaryCard(state: state, goTo: goTo)
+        SettingsCard(title: "Notifications", symbol: "bell.fill") {
+            CardRow("Prayer time notifications") {
+                HStack(spacing: 8) {
+                    Text(state.settings.notificationsEnabled ? "On" : "Off")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    CardButton(title: "Manage…") { goTo(.notifications) }
+                }
+            }
+        }
 
-        SettingsCard(title: "Startup & Language", symbol: "power") {
+        SettingsCard(title: "Startup", symbol: "power") {
             CardRow("Launch at login", subtitle: "Start Sajda Time automatically when you log in to your Mac.") {
                 GreenToggle(isOn: state.binding(\.launchAtLogin))
-            }
-            CardRow("Language") {
-                HStack(spacing: 8) {
-                    Image(systemName: "globe").foregroundStyle(.secondary)
-                    GreenPicker(
-                        options: [(AppLanguage.system, "Follow system"), (AppLanguage.english, "English")],
-                        selection: state.binding(\.language),
-                        width: 150
-                    )
-                }
             }
         }
     }
 }
-
 /// The banner at the top of General: place, date and the next prayer.
 struct SummaryCard: View {
     @ObservedObject var state: AppState
@@ -133,73 +123,6 @@ struct SummaryCard: View {
         .onTapGesture { goTo(.prayerTimes) }
     }
 }
-
-/// Compact notifications card for the General page.
-struct NotificationsSummaryCard: View {
-    @ObservedObject var state: AppState
-    let goTo: (SettingsSection) -> Void
-
-    var body: some View {
-        SettingsCard(title: "Notifications", symbol: "bell.fill") {
-            CardRow("Enable prayer time notifications") {
-                GreenToggle(isOn: state.binding(\.notificationsEnabled))
-            }
-
-            HStack(spacing: 6) {
-                ForEach(Prayer.allCases, id: \.self) { prayer in
-                    VStack(spacing: 5) {
-                        HStack(spacing: 4) {
-                            Image(systemName: prayer.symbolName)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(Palette.tint(for: prayer))
-                            Text(prayer.displayName)
-                                .font(.system(size: 11, design: .rounded))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        }
-                        GreenToggle(isOn: notifyBinding(prayer))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.primary.opacity(0.045))
-                    )
-                }
-            }
-            .disabled(!state.settings.notificationsEnabled)
-            .opacity(state.settings.notificationsEnabled ? 1 : 0.5)
-
-            CardRow("Adhan Sound") {
-                HStack(spacing: 8) {
-                    GreenPicker(
-                        options: NotificationService.availableSounds.map { ($0, $0) },
-                        selection: state.binding(\.defaultSoundName),
-                        width: 200
-                    )
-                    CardButton(title: "Play", systemImage: "play.fill") {
-                        state.notifications.playSound(named: state.settings.defaultSoundName)
-                    }
-                    CardButton(title: "Test Sound") {
-                        state.notifications.playSound(named: state.settings.defaultSoundName)
-                    }
-                }
-            }
-        }
-    }
-
-    private func notifyBinding(_ prayer: Prayer) -> Binding<Bool> {
-        Binding(
-            get: { state.settings.reminder(for: prayer).mode != .off },
-            set: { on in
-                var reminder = state.settings.reminder(for: prayer)
-                reminder.mode = on ? .automatic : .off
-                state.settings.perPrayer[prayer.rawValue] = reminder
-            }
-        )
-    }
-}
-
 // MARK: - Prayer Times
 
 struct PrayerTimesSection: View {
@@ -352,6 +275,18 @@ struct NotificationsSection: View {
                     selection: state.optionalIntBinding(\.defaultIqamahMinutes),
                     width: 140
                 )
+            }
+            CardRow("Default sound", subtitle: "Used for every reminder unless a prayer overrides it.") {
+                HStack(spacing: 8) {
+                    GreenPicker(
+                        options: NotificationService.availableSounds.map { ($0, $0) },
+                        selection: state.binding(\.defaultSoundName),
+                        width: 170
+                    )
+                    CardButton(title: "Play", systemImage: "play.fill") {
+                        state.notifications.playSound(named: state.settings.defaultSoundName)
+                    }
+                }
             }
             CardRow("Adhan at prayer time", subtitle: "Plays an audio file you choose; notifications otherwise use the sound above.") {
                 GreenToggle(isOn: state.binding(\.playFullAdhan))
@@ -732,12 +667,6 @@ struct MenubarSection: View {
             }
         }
 
-        SettingsCard(title: "Startup", symbol: "power") {
-            CardRow("Launch at login", subtitle: "Start Sajda Time automatically when you log in to your Mac.") {
-                GreenToggle(isOn: state.binding(\.launchAtLogin))
-            }
-        }
-
         SettingsCard(title: "Stored data", symbol: "internaldrive") {
             CardRow("Cached days") {
                 HStack(spacing: 8) {
@@ -755,6 +684,58 @@ enum CacheInfo {
         let contents = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
         let days = contents.filter { $0.pathExtension == "json" }.count
         return days == 1 ? "1 day" : "\(days) days"
+    }
+}
+
+// MARK: - Focus
+
+struct FocusSection: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        SettingsCard(title: "Focus", symbol: "moon.haze.fill") {
+            CardRow("Enable Focus Mode", subtitle: "Covers the screen at the selected prayers.") {
+                GreenToggle(isOn: state.binding(\.focusModeEnabled))
+            }
+            CardRow("Duration") {
+                Stepper("\(state.settings.focusDurationMinutes) min",
+                        value: state.binding(\.focusDurationMinutes), in: 1...120, step: 5)
+                    .frame(width: 130)
+            }
+        }
+
+        SettingsCard(title: "Behaviour", symbol: "slider.horizontal.3") {
+            CardRow("Backdrop") {
+                GreenPicker(
+                    options: BlurIntensity.allCases.map { ($0, $0.displayName) },
+                    selection: state.binding(\.focusBlurIntensity),
+                    width: 140
+                )
+            }
+            CardRow("Trigger at") {
+                GreenPicker(
+                    options: FocusTrigger.allCases.map { ($0, $0.displayName) },
+                    selection: state.binding(\.focusTrigger),
+                    width: 190
+                )
+            }
+            CardRow("Allow ⌘⎋ to exit early") {
+                GreenToggle(isOn: state.binding(\.focusEmergencyExit))
+            }
+            HStack {
+                CardButton(title: "Try it for 10 seconds", systemImage: "eye") {
+                    state.focusMode.preview()
+                }
+                Spacer()
+            }
+        }
+
+        SettingsCard(title: nil, symbol: nil) {
+            StatusLine(
+                text: "Focus Mode covers the screen at the selected prayers. It is a discipline aid, not a lock: Force Quit always works, and it does not engage while another app is presenting full screen.",
+                kind: .info
+            )
+        }
     }
 }
 

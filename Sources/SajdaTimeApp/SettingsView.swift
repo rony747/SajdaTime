@@ -9,6 +9,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case location
     case appearance
     case menubar
+    case focus
     case about
 
     var id: String { rawValue }
@@ -21,6 +22,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .location: return "Location"
         case .appearance: return "Appearance"
         case .menubar: return "Menubar"
+        case .focus: return "Focus"
         case .about: return "About"
         }
     }
@@ -33,6 +35,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .location: return "mappin.circle.fill"
         case .appearance: return "paintpalette.fill"
         case .menubar: return "menubar.rectangle"
+        case .focus: return "moon.haze.fill"
         case .about: return "info.circle.fill"
         }
     }
@@ -46,6 +49,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .location: return "Location"
         case .appearance: return "Appearance"
         case .menubar: return "Menubar"
+        case .focus: return "Focus"
         case .about: return "About"
         }
     }
@@ -58,6 +62,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .location: return "Where you are, and which clock times are shown on."
         case .appearance: return "Clock format and what the panel displays."
         case .menubar: return "What the menu bar item shows."
+        case .focus: return "Cover the screen for a set period at prayer time."
         case .about: return "Version and where the times come from."
         }
     }
@@ -210,6 +215,7 @@ struct SettingsDetailContent: View {
             case .location: LocationSection(state: state)
             case .appearance: AppearanceSection(state: state)
             case .menubar: MenubarSection(state: state)
+            case .focus: FocusSection(state: state)
             case .about: AboutSection(state: state)
             }
         }
