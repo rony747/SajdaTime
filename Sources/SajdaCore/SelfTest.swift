@@ -17,10 +17,27 @@ public struct SelfTestFailure: Sendable {
 /// checks can be run two ways: through `XCTest` in Xcode, and through
 /// `sajdactl selftest` on a machine where only a command line toolchain is
 /// available. One copy of the assertions, two runners.
+/// The outcome of a full self-test run.
+public struct SelfTestReport: Sendable {
+    /// How many invariants were checked. A run that silently stopped checking
+    /// anything would still report no failures, so callers that care need this.
+    public let checksRun: Int
+    public let failures: [SelfTestFailure]
+
+    public var passed: Bool { failures.isEmpty }
+}
+
 public enum SajdaCoreSelfTest {
 
+    /// Every failure, or an empty array when the engine is sound.
     public static func run() -> [SelfTestFailure] {
+        report().failures
+    }
+
+    /// The same run, with the number of invariants checked.
+    public static func report() -> SelfTestReport {
         var failures: [SelfTestFailure] = []
+        var checks = 0
 
         func formatter(zone: String, _ day: String) -> Date {
             let f = DateFormatter()
@@ -30,6 +47,7 @@ public enum SajdaCoreSelfTest {
         }
 
         func check(_ name: String, _ condition: Bool, _ detail: @autoclosure () -> String = "") {
+            checks += 1
             if !condition {
                 failures.append(SelfTestFailure(name: name, detail: detail()))
             }
@@ -257,7 +275,7 @@ public enum SajdaCoreSelfTest {
         //     hard-coded foreign city.
         guard let dhakaZone = TimeZone(identifier: "Asia/Dhaka") else {
             check("location.dhakaZone", false, "Asia/Dhaka unavailable")
-            return failures
+            return SelfTestReport(checksRun: checks, failures: failures)
         }
         let seeded = AppSettings.fresh(for: dhakaZone)
         check("location.seededFromTimeZone",
@@ -385,6 +403,6 @@ public enum SajdaCoreSelfTest {
         check("quotes.noImmediateRepeat", secondQuote.id != firstQuote.id,
               "repeated \(firstQuote.id)")
 
-        return failures
+        return SelfTestReport(checksRun: checks, failures: failures)
     }
 }

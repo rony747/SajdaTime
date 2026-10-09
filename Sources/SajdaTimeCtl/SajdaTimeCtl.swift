@@ -132,13 +132,15 @@ struct SajdaTimeCtl {
     }
 
     static func selftest() {
-        let failures = SajdaCoreSelfTest.run()
-        if failures.isEmpty {
-            print("selftest: all engine invariants hold.")
+        let report = SajdaCoreSelfTest.report()
+        if report.passed {
+            // The count matters: a run that stopped checking anything would also
+            // report no failures.
+            print("selftest: all \(report.checksRun) engine invariants hold.")
             return
         }
-        print("selftest: \(failures.count) failure(s)")
-        for failure in failures {
+        print("selftest: \(report.failures.count) of \(report.checksRun) check(s) failed")
+        for failure in report.failures {
             print("  ✗ \(failure.name)\(failure.detail.isEmpty ? "" : " — \(failure.detail)")")
         }
         exit(1)
