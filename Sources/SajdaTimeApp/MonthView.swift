@@ -1,5 +1,5 @@
 import SwiftUI
-import PrayerCore
+import SajdaCore
 
 /// A month at a glance: Gregorian day numbers with the corresponding Hijri day,
 /// and today marked. Uses the Umm al-Qura calendar, the same one the times use.

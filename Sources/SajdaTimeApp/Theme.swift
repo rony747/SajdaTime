@@ -1,5 +1,5 @@
 import SwiftUI
-import PrayerCore
+import SajdaCore
 
 // MARK: - Palette
 
@@ -94,21 +94,73 @@ struct MosqueShape: Shape {
     }
 }
 
-/// The rounded-square app mark: a green gradient tile with the mosque in white.
+/// The rounded-square app mark.
+///
+/// Uses the supplied icon artwork; the drawn mosque remains as a fallback so the
+/// UI still renders if the resource is missing.
 struct AppMark: View {
     var size: CGFloat = 44
     var showsShadow: Bool = true
 
     var body: some View {
-        RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
-            .fill(Palette.markGradient)
-            .overlay {
-                MosqueShape()
-                    .fill(.white, style: FillStyle(eoFill: true))
-                    .padding(size * 0.16)
+        Group {
+            if let image = NSImage(named: "appicon") {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+            } else {
+                RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
+                    .fill(Palette.markGradient)
+                    .overlay {
+                        MosqueShape()
+                            .fill(.white, style: FillStyle(eoFill: true))
+                            .padding(size * 0.16)
+                    }
             }
-            .frame(width: size, height: size)
-            .shadow(color: Palette.greenDeep.opacity(showsShadow ? 0.28 : 0), radius: size * 0.12, y: size * 0.05)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: Palette.greenDeep.opacity(showsShadow ? 0.20 : 0), radius: size * 0.10, y: size * 0.04)
+    }
+}
+
+/// The full wordmark, used where the app introduces itself.
+struct BrandLogo: View {
+    var width: CGFloat
+
+    var body: some View {
+        if let image = NSImage(named: "logo") {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: width)
+        } else {
+            HStack(spacing: 10) {
+                AppMark(size: width * 0.24)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Sajda Time")
+                        .font(.system(size: width * 0.10, weight: .bold, design: .rounded))
+                    Text("Your Daily Connection")
+                        .font(.system(size: width * 0.055, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: width)
+        }
+    }
+}
+
+/// Landscape artwork used behind the next-prayer surfaces.
+struct BannerArt: View {
+    var body: some View {
+        if let image = NSImage(named: "banner") {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fill)
+        } else {
+            SkylineSilhouette()
+        }
     }
 }
 
@@ -279,8 +331,8 @@ struct CardButton: View {
 
 // MARK: - Banner illustration
 
-/// Simplified skyline used behind the next-prayer banner: a low sun, a few
-/// silhouettes and a horizon. Drawn rather than shipped as an asset.
+/// Fallback skyline, drawn rather than loaded. Only used when the supplied
+/// banner artwork is unavailable.
 struct SkylineSilhouette: View {
     var tint: Color = Palette.greenDeep
 

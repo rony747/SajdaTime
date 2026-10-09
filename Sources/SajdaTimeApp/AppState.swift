@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
-import PrayerCore
+import SajdaCore
 
 /// Single source of truth for the UI.
 ///
@@ -37,7 +37,7 @@ final class AppState: ObservableObject {
     private let store: PrayerTimesStore
     // Bump this whenever the settings schema changes incompatibly: a stale blob
     // is then ignored and the app starts from timezone-seeded defaults.
-    private let defaultsKey = "app.local.prayerbar.settings.v2"
+    private let defaultsKey = "app.local.sajda.settings.v2"
     private var ticker: Timer?
     private var refreshTask: Task<Void, Never>?
     private var lastLoadedDay: Date?
@@ -291,7 +291,7 @@ final class AppState: ObservableObject {
     /// Hover text for the menu bar item, so the full context is available even
     /// when the label itself is narrow.
     var statusTooltip: String {
-        guard let subject = countdownSubject else { return "PrayerBar" }
+        guard let subject = countdownSubject else { return "Sajda Time" }
         let clock = DateFormatter()
         clock.timeZone = settings.displayTimeZone
         clock.dateFormat = "h:mm a"

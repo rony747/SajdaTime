@@ -5,17 +5,17 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>PrayerBar</string>
+	<string>Sajda Time</string>
 	<key>CFBundleExecutable</key>
-	<string>PrayerBar</string>
+	<string>SajdaTime</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.local.prayerbar</string>
+	<string>app.local.sajdatime</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>PrayerBar</string>
+	<string>Sajda Time</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -28,11 +28,11 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>PrayerBar</string>
+	<string>Sajda Time</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>PrayerBar uses your location to work out prayer times for where you are. Your location is only used to compute prayer times and is never sent anywhere except to the prayer time service.</string>
+	<string>Sajda Time uses your location to work out prayer times for where you are. Your location is only used to compute prayer times and is never sent anywhere except to the prayer time service.</string>
 	<key>NSLocationUsageDescription</key>
-	<string>PrayerBar uses your location to work out prayer times for where you are.</string>
+	<string>Sajda Time uses your location to work out prayer times for where you are.</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
 	<key>NSSupportsSuddenTermination</key>

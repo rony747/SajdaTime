@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import Combine
-import PrayerCore
+import SajdaCore
 
 /// Owns the menu bar item.
 ///
@@ -43,8 +43,8 @@ final class StatusItemController: NSObject {
             button.appearsDisabled = false
         }
 
-        if ProcessInfo.processInfo.environment["PRAYERBAR_DEBUG"] == "1" {
-            let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("prayerbar-status.log")
+        if ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1" {
+            let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("sajda-status.log")
             try? "".write(to: url, atomically: true, encoding: .utf8)
             debugLogURL = url
         }
@@ -129,9 +129,8 @@ final class StatusItemController: NSObject {
     /// Report where the panel ended up relative to the status item it hangs from.
     /// A negative gap means the panel's top is below the item, which is correct.
     private func logGeometry() {
-        guard ProcessInfo.processInfo.environment["PRAYERBAR_DEBUG"] == "1",
-              let window = popover.contentViewController?.view.window,
-              let screen = window.screen ?? NSScreen.main else { return }
+        guard ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1",
+              let window = popover.contentViewController?.view.window else { return }
         let preferred = popover.contentViewController?.preferredContentSize ?? .zero
         let contentHeight = window.contentRect(forFrameRect: window.frame).height
 
@@ -144,7 +143,7 @@ final class StatusItemController: NSObject {
             buttonBottom = String(format: "%.1f", onScreen.minY)
             gap = String(format: "%.1f", window.frame.maxY - onScreen.minY)
         }
-        NSLog("PrayerBar: popoverTop=\(String(format: "%.1f", window.frame.maxY)) statusItemBottom=\(buttonBottom) gapAboveStatusItem=\(gap) frame=\(window.frame) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1)")
+        NSLog("SajdaTime: popoverTop=\(String(format: "%.1f", window.frame.maxY)) statusItemBottom=\(buttonBottom) gapAboveStatusItem=\(gap) frame=\(window.frame) preferred=\(preferred) contentHeight=\(contentHeight) clipped=\(preferred.height > contentHeight + 1)")
     }
 
     /// Make sure the panel hangs below the status item rather than rising into

@@ -1,8 +1,8 @@
 import AppKit
 import UserNotifications
-import PrayerCore
+import SajdaCore
 
-/// PrayerBar — a menu bar app.
+/// SajdaTime — a menu bar app.
 ///
 /// Deliberately a plain AppKit application rather than a SwiftUI `App`. SwiftUI's
 /// scene machinery proved unreliable for this shape of app twice over: a
@@ -11,7 +11,7 @@ import PrayerCore
 /// item and the settings window are now created and shown explicitly, and SwiftUI
 /// is used only for view content, hosted in AppKit containers.
 @main
-enum PrayerBarMain {
+enum SajdaTimeMain {
     static func main() {
         let application = NSApplication.shared
         let delegate = AppDelegate()
@@ -39,10 +39,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             self?.openSettings(section: section)
         }
 
-        if ProcessInfo.processInfo.environment["PRAYERBAR_OPEN_SETTINGS"] == "1" {
+        if ProcessInfo.processInfo.environment["SAJDA_OPEN_SETTINGS"] == "1" {
             openSettings()
         }
-        if ProcessInfo.processInfo.environment["PRAYERBAR_OPEN_POPOVER"] == "1" {
+        if ProcessInfo.processInfo.environment["SAJDA_OPEN_POPOVER"] == "1" {
             // Deferred so the status item has been laid out by the bar.
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.statusItem?.showPopover()

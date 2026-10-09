@@ -1,5 +1,5 @@
 import SwiftUI
-import PrayerCore
+import SajdaCore
 
 /// Settings sections, shown in the sidebar.
 enum SettingsSection: String, CaseIterable, Identifiable {
@@ -52,9 +52,9 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var subheading: String {
         switch self {
-        case .general: return "Configure how PrayerBar works on your Mac."
+        case .general: return "Configure how SajdaTime works on your Mac."
         case .prayerTimes: return "How the times are calculated and from which source."
-        case .notifications: return "When PrayerBar alerts you, for each prayer."
+        case .notifications: return "When SajdaTime alerts you, for each prayer."
         case .location: return "Where you are, and which clock times are shown on."
         case .appearance: return "Clock format and what the panel displays."
         case .menubar: return "What the menu bar item shows."
@@ -92,18 +92,9 @@ struct SettingsView: View {
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 11) {
-                AppMark(size: 46)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("PrayerBar")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                    Text("Your daily prayer companion")
-                        .font(.system(size: 10.5, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-            }
+            BrandLogo(width: 178)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
             .padding(.horizontal, 14)
             .padding(.top, 34)
             .padding(.bottom, 16)

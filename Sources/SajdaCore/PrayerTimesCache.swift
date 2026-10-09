@@ -12,7 +12,7 @@ public final class PrayerTimesCache: @unchecked Sendable {
         }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        return base.appendingPathComponent("PrayerBar", isDirectory: true)
+        return base.appendingPathComponent("SajdaTime", isDirectory: true)
     }
 
     private let directory: URL

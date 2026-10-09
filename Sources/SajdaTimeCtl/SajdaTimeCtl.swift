@@ -1,11 +1,11 @@
 import Foundation
-import PrayerCore
+import SajdaCore
 
 /// Verification harness. Not shipped to users: it exists so the offline
 /// calculator can be checked against the live Aladhan service and so the
 /// engine's invariants can be run without an XCTest bundle.
 @main
-struct PrayerBarCtl {
+struct SajdaTimeCtl {
     static func main() async {
         let args = Array(CommandLine.arguments.dropFirst())
         guard let command = args.first else {
@@ -36,7 +36,7 @@ struct PrayerBarCtl {
 
     static func printUsage() {
         print("""
-        prayerbarctl — prayer time verification
+        sajdactl — prayer time verification
 
           show <lat> <lng> <tz> [--method ID] [--school 0|1] [--date YYYY-MM-DD]
               Print calculated and fetched times for one location.
@@ -102,7 +102,7 @@ struct PrayerBarCtl {
     }
 
     static func selftest() {
-        let failures = PrayerCoreSelfTest.run()
+        let failures = SajdaCoreSelfTest.run()
         if failures.isEmpty {
             print("selftest: all engine invariants hold.")
             return
@@ -124,7 +124,7 @@ struct PrayerBarCtl {
         var madhab: Madhab
         var date: Date
 
-        var formatter: DateFormatter { PrayerBarCtl.clockFormatter(zone) }
+        var formatter: DateFormatter { SajdaTimeCtl.clockFormatter(zone) }
 
         /// Times for the query's day, plus the day before and after, which the
         /// window logic needs across midnight.
@@ -191,7 +191,7 @@ struct PrayerBarCtl {
     static func countdown(_ args: [String]) async {
         let query = parseLocationQuery(
             args,
-            usage: "usage: prayerbarctl countdown <lat> <lng> <tz> [--method ID] [--school 0|1] [--date YYYY-MM-DD]"
+            usage: "usage: sajdactl countdown <lat> <lng> <tz> [--method ID] [--school 0|1] [--date YYYY-MM-DD]"
         )
         let (previous, today, next) = query.days()
         let formatter = query.formatter
@@ -226,7 +226,7 @@ struct PrayerBarCtl {
     static func show(_ args: [String]) async {
         let query = parseLocationQuery(
             args,
-            usage: "usage: prayerbarctl show <lat> <lng> <tz> [--method ID] [--school 0|1] [--date YYYY-MM-DD]"
+            usage: "usage: sajdactl show <lat> <lng> <tz> [--method ID] [--school 0|1] [--date YYYY-MM-DD]"
         )
         let coordinate = query.coordinate
         let zone = query.zone

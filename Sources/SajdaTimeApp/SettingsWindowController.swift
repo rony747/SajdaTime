@@ -38,8 +38,8 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
             guard let self, let window = self.window else { return }
             if !window.isKeyWindow { window.makeKey() }
-            if ProcessInfo.processInfo.environment["PRAYERBAR_DEBUG"] == "1" {
-                NSLog("PrayerBar: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) glass=\(self.window?.contentView is NSGlassEffectView) frame=\(window.frame)")
+            if ProcessInfo.processInfo.environment["SAJDA_DEBUG"] == "1" {
+                NSLog("SajdaTime: settings window — visible=\(window.isVisible) key=\(window.isKeyWindow) opaque=\(window.isOpaque) glass=\(self.window?.contentView is NSGlassEffectView) frame=\(window.frame)")
             }
         }
     }
@@ -51,7 +51,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "PrayerBar Settings"
+        window.title = "Sajda Time Settings"
         window.isReleasedWhenClosed = false
         window.delegate = self
 

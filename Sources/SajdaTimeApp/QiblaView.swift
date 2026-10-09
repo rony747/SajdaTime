@@ -1,5 +1,5 @@
 import SwiftUI
-import PrayerCore
+import SajdaCore
 
 /// Qibla direction for the configured location.
 ///

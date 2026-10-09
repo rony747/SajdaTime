@@ -1,6 +1,6 @@
 import AppKit
 import SwiftUI
-import PrayerCore
+import SajdaCore
 
 /// Covers the screen during prayer time.
 ///

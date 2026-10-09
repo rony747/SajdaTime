@@ -23,7 +23,7 @@ enum LoginItem {
                 }
             }
         } catch {
-            NSLog("PrayerBar: launch-at-login change failed: \(error.localizedDescription)")
+            NSLog("SajdaTime: launch-at-login change failed: \(error.localizedDescription)")
             return false
         }
         return true

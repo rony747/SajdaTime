@@ -1,6 +1,6 @@
 import Foundation
 
-/// A geographic position. Deliberately framework-free so `PrayerCore` stays testable.
+/// A geographic position. Deliberately framework-free so `SajdaCore` stays testable.
 public struct Coordinate: Codable, Sendable, Equatable {
     public var latitude: Double
     public var longitude: Double

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ---------------------------------------------------------------------------
-# Builds PrayerBar without SwiftPM's build system.
+# Builds SajdaTime without SwiftPM's build system.
 #
 # Why not `swift build`? SwiftPM drives either xcbuild or llbuild, and both are
 # blocked from writing their state files in this environment (the file sandbox
@@ -10,8 +10,8 @@
 # Package.swift is still maintained so the project opens normally in Xcode.
 #
 # Usage:  ./build.sh [debug|release]      (default: release)
-# Output: .build/bin/prayerbarctl         verification CLI
-#         dist/PrayerBar.app              the application bundle
+# Output: .build/bin/sajdactl         verification CLI
+#         dist/Sajda Time.app             the application bundle
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -29,7 +29,7 @@ BUILD="$ROOT/.build"
 LIB="$BUILD/lib"
 BIN="$BUILD/bin"
 DIST="$ROOT/dist"
-APP="$DIST/PrayerBar.app"
+APP="$DIST/Sajda Time.app"
 
 mkdir -p "$LIB" "$BIN" "$DIST"
 
@@ -42,31 +42,55 @@ mkdir -p "$CLANG_MODULE_CACHE_PATH"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
 TARGET="arm64-apple-macosx26.0"
 
-echo "==> Building PrayerCore ($CONFIG)"
+echo "==> Building SajdaCore ($CONFIG)"
 swiftc -disable-sandbox -parse-as-library "${OPT[@]}" -target "$TARGET" -sdk "$SDK" \
-    -emit-module -emit-library -static -module-name PrayerCore \
-    -emit-module-path "$LIB/PrayerCore.swiftmodule" \
-    -o "$LIB/libPrayerCore.a" \
-    Sources/PrayerCore/*.swift
+    -emit-module -emit-library -static -module-name SajdaCore \
+    -emit-module-path "$LIB/SajdaCore.swiftmodule" \
+    -o "$LIB/libSajdaCore.a" \
+    Sources/SajdaCore/*.swift
 
-echo "==> Building prayerbarctl"
+echo "==> Building sajdactl"
 swiftc -disable-sandbox -parse-as-library "${OPT[@]}" -target "$TARGET" -sdk "$SDK" \
-    -I "$LIB" -o "$BIN/prayerbarctl" \
-    Sources/PrayerBarCtl/*.swift "$LIB/libPrayerCore.a"
+    -I "$LIB" -o "$BIN/sajdactl" \
+    Sources/SajdaTimeCtl/*.swift "$LIB/libSajdaCore.a"
 
-echo "==> Building PrayerBar app binary"
+echo "==> Building SajdaTime app binary"
 swiftc -disable-sandbox -parse-as-library "${OPT[@]}" -target "$TARGET" -sdk "$SDK" \
-    -I "$LIB" -o "$BIN/PrayerBar" \
-    Sources/PrayerBarApp/*.swift "$LIB/libPrayerCore.a"
+    -I "$LIB" -o "$BIN/SajdaTime" \
+    Sources/SajdaTimeApp/*.swift "$LIB/libSajdaCore.a"
 
 echo "==> Assembling app bundle"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN/PrayerBar" "$APP/Contents/MacOS/PrayerBar"
+cp "$BIN/SajdaTime" "$APP/Contents/MacOS/SajdaTime"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
-if [ -f Resources/AppIcon.icns ]; then
-    cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+# In-app artwork, loaded by name from Contents/Resources.
+for asset in appicon banner logo; do
+    if [ -f "Resources/Assets/$asset.png" ]; then
+        cp "Resources/Assets/$asset.png" "$APP/Contents/Resources/$asset.png"
+    fi
+done
+
+# The .icns is generated from the 1024px master rather than committed as a
+# binary, so the icon has exactly one source of truth.
+if [ -f Resources/Assets/appicon.png ]; then
+    ICONSET="$BUILD/AppIcon.iconset"
+    rm -rf "$ICONSET"
+    mkdir -p "$ICONSET"
+    for size in 16 32 128 256 512; do
+        /usr/bin/sips -z "$size" "$size" Resources/Assets/appicon.png \
+            --out "$ICONSET/icon_${size}x${size}.png" >/dev/null 2>&1
+        double=$((size * 2))
+        /usr/bin/sips -z "$double" "$double" Resources/Assets/appicon.png \
+            --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null 2>&1
+    done
+    if /usr/bin/iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns" 2>/dev/null; then
+        echo "    icon: AppIcon.icns generated"
+    else
+        echo "    WARNING: iconutil failed; the app will use the default icon"
+    fi
+    rm -rf "$ICONSET"
 fi
 
 # Ad-hoc signature: enough for local use (notifications, location, keychain-free).
@@ -76,5 +100,5 @@ fi
 
 echo
 echo "Done."
-echo "  CLI : $BIN/prayerbarctl"
+echo "  CLI : $BIN/sajdactl"
 echo "  App : $APP"

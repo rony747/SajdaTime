@@ -1,7 +1,7 @@
 import Foundation
 import AppKit
 import UserNotifications
-import PrayerCore
+import SajdaCore
 
 /// Schedules prayer reminders and plays sounds.
 ///
@@ -147,7 +147,7 @@ final class NotificationService: NSObject, ObservableObject {
             await requestAuthorization()
         }
         guard authorizationStatus == .authorized || authorizationStatus == .provisional else {
-            lastError = "Notifications are not allowed. Turn them on in System Settings › Notifications › PrayerBar."
+            lastError = "Notifications are not allowed. Turn them on in System Settings › Notifications › SajdaTime."
             return
         }
         let content = UNMutableNotificationContent()

@@ -15,9 +15,9 @@ public struct SelfTestFailure: Sendable {
 ///
 /// This lives in the library rather than in the test target so that the same
 /// checks can be run two ways: through `XCTest` in Xcode, and through
-/// `prayerbarctl selftest` on a machine where only a command line toolchain is
+/// `sajdactl selftest` on a machine where only a command line toolchain is
 /// available. One copy of the assertions, two runners.
-public enum PrayerCoreSelfTest {
+public enum SajdaCoreSelfTest {
 
     public static func run() -> [SelfTestFailure] {
         var failures: [SelfTestFailure] = []

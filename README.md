@@ -1,4 +1,4 @@
-# PrayerBar
+# Sajda Time
 
 A native macOS menu bar app for Muslim prayer times: live times for your
 location, a countdown in the menu bar, and per-prayer reminders you control.
@@ -21,7 +21,7 @@ location, a countdown in the menu bar, and per-prayer reminders you control.
 ```bash
 ./build.sh            # release build
 ./build.sh debug      # debug build
-open "dist/PrayerBar.app"
+open "dist/Sajda Time.app"
 ```
 
 Requires Xcode (tested with Xcode 27 / Swift 6.4) and **macOS 26 or later**,
@@ -46,17 +46,17 @@ build reproducible under those conditions.
 The app ships a verification CLI rather than relying on unit tests alone:
 
 ```bash
-./.build/bin/prayerbarctl selftest   # engine invariants, no network
-./.build/bin/prayerbarctl methods    # every calculation method vs the live API
-./.build/bin/prayerbarctl compare    # a fixed set of cities vs the live API
-./.build/bin/prayerbarctl matrix     # polar and edge-case latitudes
-./.build/bin/prayerbarctl store      # the app's exact fetch/cache path
-./.build/bin/prayerbarctl countdown 23.8103 90.4125 Asia/Dhaka --method KARACHI  # menu bar across a day
-./.build/bin/prayerbarctl show 51.5072 -0.1276 Europe/London --method MWL
+./.build/bin/sajdactl selftest   # engine invariants, no network
+./.build/bin/sajdactl methods    # every calculation method vs the live API
+./.build/bin/sajdactl compare    # a fixed set of cities vs the live API
+./.build/bin/sajdactl matrix     # polar and edge-case latitudes
+./.build/bin/sajdactl store      # the app's exact fetch/cache path
+./.build/bin/sajdactl countdown 23.8103 90.4125 Asia/Dhaka --method KARACHI  # menu bar across a day
+./.build/bin/sajdactl show 51.5072 -0.1276 Europe/London --method MWL
 ```
 
 `selftest` and the XCTest target run the *same* assertions, which live in
-`PrayerCoreSelfTest` so there is only one copy.
+`SajdaCoreSelfTest` so there is only one copy.
 
 ### Current accuracy against Aladhan
 
@@ -69,13 +69,13 @@ Measured over 132 samples covering all 22 shipped methods:
 | within 2 minutes | 132 / 132 |
 | worst case | 2 min |
 
-Reproduce with `prayerbarctl methods`.
+Reproduce with `sajdactl methods`.
 
 ## Project layout
 
 ```
 Sources/
-  PrayerCore/          pure logic, no UI, testable
+  SajdaCore/          pure logic, no UI, testable
     Astronomy.swift        solar position (declination, equation of time)
     PrayerCalculator.swift on-device prayer time computation
     CalculationMethod.swift the 22 method definitions and madhabs
@@ -84,10 +84,25 @@ Sources/
     PrayerTimesCache.swift per-day disk cache
     AppSettings.swift      every user preference, as data
     SelfTest.swift         executable specification
-  PrayerBarApp/        the SwiftUI menu bar application
-  PrayerBarCtl/        the verification CLI
-Tests/PrayerCoreTests/ XCTest wrapper around the shared self-test
+  SajdaTimeApp/        the SwiftUI menu bar application
+  SajdaTimeCtl/        the verification CLI
+Tests/SajdaCoreTests/ XCTest wrapper around the shared self-test
 ```
+
+## Brand assets
+
+`Resources/Assets/` holds the master artwork, all with transparent backgrounds:
+
+| file | used for |
+| --- | --- |
+| `appicon.png` | the app icon, the menu bar-adjacent mark and the panel header |
+| `logo.png` | the wordmark in the settings sidebar and About |
+| `banner.png` | the artwork behind the next-prayer banner and the General summary |
+
+`AppIcon.icns` is generated from `appicon.png` by `build.sh` rather than
+committed, so the icon has one source of truth. The icon master sits on Apple's
+macOS grid (824pt of artwork inside a 1024pt canvas). Each view falls back to a
+drawn mosque if an asset is missing, so the UI cannot end up blank.
 
 ## Design
 
@@ -177,7 +192,7 @@ accessory app is refused key-window status and the window would not take clicks.
 **The menu bar item is AppKit, not SwiftUI.** `MenuBarExtra`'s label did not
 render the countdown — the item showed the icon and nothing else. A status item
 whose `button.title` we set ourselves is both reliable and *verifiable*: with
-`PRAYERBAR_DEBUG=1` the app logs the exact string it sets, and
+`SAJDA_DEBUG=1` the app logs the exact string it sets, and
 `MenuBarComposer` is asserted in the self-test, so a countdown that stops
 appearing fails a test instead of failing silently on screen.
 
@@ -199,7 +214,7 @@ Isha      18:53    23:45    292 min   Islamic midnight
           (time of necessity until 04:38)
 ```
 
-Use `prayerbarctl countdown <lat> <lng> <tz>` to print what the menu bar would
+Use `sajdactl countdown <lat> <lng> <tz>` to print what the menu bar would
 show at every half hour of the day.
 
 **The cache stores prayer names, not array positions**, so reordering the
@@ -207,7 +222,7 @@ show at every half hour of the day.
 
 ## Settings storage
 
-Preferences live under `app.local.prayerbar.settings.v2`. The key is versioned
+Preferences live under `app.local.sajda.settings.v2`. The key is versioned
 because a schema change makes an older blob undecodable, and silently keeping it
 would carry forward a wrong location; bumping the key starts from timezone-seeded
 defaults instead.

@@ -1,5 +1,5 @@
 import SwiftUI
-import PrayerCore
+import SajdaCore
 
 /// Pages the popover can show. Kept inline rather than as sheets: a sheet
 /// presented from an NSPopover is awkward to dismiss, whereas swapping the
@@ -49,7 +49,7 @@ struct PanelView: View {
         HStack(spacing: 11) {
             AppMark(size: 44)
             VStack(alignment: .leading, spacing: 0) {
-                Text("PrayerBar")
+                Text("Sajda Time")
                     .font(.system(size: 19, weight: .bold, design: .rounded))
                 Text("Your daily prayer companion")
                     .font(.system(size: 11.5, design: .rounded))
@@ -67,7 +67,7 @@ struct PanelView: View {
             Divider()
             Button("Settings…") { onOpenSettings(.general) }
             Divider()
-            Button("Quit PrayerBar") { NSApplication.shared.terminate(nil) }
+            Button("Quit Sajda Time") { NSApplication.shared.terminate(nil) }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 13, weight: .semibold))
@@ -139,9 +139,9 @@ struct PanelView: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Palette.bannerGradient)
-            .overlay(alignment: .trailing) {
-                SkylineSilhouette()
-                    .frame(width: 150)
+            .overlay(alignment: .bottomTrailing) {
+                BannerArt()
+                    .frame(height: 92)
                     .allowsHitTesting(false)
             }
             .overlay(alignment: .trailing) {

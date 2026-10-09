@@ -1,6 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
-import PrayerCore
+import SajdaCore
 
 // MARK: - General
 
@@ -57,7 +57,7 @@ struct GeneralSection: View {
         NotificationsSummaryCard(state: state, goTo: goTo)
 
         SettingsCard(title: "Startup & Language", symbol: "power") {
-            CardRow("Launch at login", subtitle: "Start PrayerBar automatically when you log in to your Mac.") {
+            CardRow("Launch at login", subtitle: "Start SajdaTime automatically when you log in to your Mac.") {
                 GreenToggle(isOn: state.binding(\.launchAtLogin))
             }
             CardRow("Language") {
@@ -118,7 +118,7 @@ struct SummaryCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Palette.bannerGradient)
         .overlay(alignment: .bottomTrailing) {
-            SkylineSilhouette().frame(width: 230, height: 84).allowsHitTesting(false)
+            BannerArt().frame(height: 104).allowsHitTesting(false)
         }
         .clipShape(RoundedRectangle(cornerRadius: Palette.cardCorner, style: .continuous))
         .contentShape(Rectangle())
@@ -699,7 +699,7 @@ struct MenubarSection: View {
         }
 
         SettingsCard(title: "Startup", symbol: "power") {
-            CardRow("Launch at login", subtitle: "Start PrayerBar automatically when you log in to your Mac.") {
+            CardRow("Launch at login", subtitle: "Start SajdaTime automatically when you log in to your Mac.") {
                 GreenToggle(isOn: state.binding(\.launchAtLogin))
             }
         }
@@ -730,19 +730,11 @@ struct AboutSection: View {
     @ObservedObject var state: AppState
 
     var body: some View {
-        HStack(spacing: 14) {
-            AppMark(size: 62)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("PrayerBar")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                Text("Version \(Bundle.main.shortVersion)")
-                    .font(.system(size: 11.5, design: .rounded))
-                    .foregroundStyle(.secondary)
-                Text("Your daily prayer companion")
-                    .font(.system(size: 11.5, design: .rounded))
-                    .foregroundStyle(.tertiary)
-            }
-            Spacer()
+        VStack(alignment: .leading, spacing: 10) {
+            BrandLogo(width: 260)
+            Text("Version \(Bundle.main.shortVersion)")
+                .font(.system(size: 11.5, design: .rounded))
+                .foregroundStyle(.secondary)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
