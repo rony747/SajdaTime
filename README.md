@@ -105,6 +105,23 @@ Built on Liquid Glass, in green with a warm amber for the sun prayers:
   Umm al-Qura day numbers alongside the Gregorian ones.
 - **Settings** — sidebar with the app identity, and cards with icon headers.
 
+## Prayer windows, start to end
+
+Every prayer is shown as a span rather than a single instant — "5:24 – 6:43 AM",
+with what ends it underneath — because a prayer's time is a window with a length
+(Fajr ends at sunrise, Isha at Islamic midnight). The same detail appears in
+`Prayer Times › Prayer windows`, with each window's duration.
+
+## Window translucency
+
+Both surfaces are translucent, which is what lets the glass read as glass:
+
+- The **popover** gets its material from `NSPopover`.
+- The **settings window** is an `NSWindow` with `isOpaque = false` and a clear
+  background, hosting an `NSGlassEffectView`. Without that the cards sat on an
+  opaque `windowBackgroundColor` and rendered as flat rectangles — which is why
+  settings did not look like Liquid Glass while the popover did.
+
 ## Clock format
 
 `Appearance › Clock` switches every time in the app between 12-hour

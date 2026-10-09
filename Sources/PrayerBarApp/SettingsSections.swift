@@ -253,6 +253,37 @@ struct PrayerTimesSection: View {
             }
         }
 
+        SettingsCard(title: "Prayer windows", symbol: "hourglass") {
+            CardRow("Each prayer's valid time, and what ends it") { EmptyView() }
+            ForEach(Prayer.allCases, id: \.self) { prayer in
+                CardRow(prayer.displayName) {
+                    if let window = state.today?.window(for: prayer, nextDay: state.tomorrow) {
+                        HStack(spacing: 8) {
+                            Text(TimeFormatting.clockRange(
+                                window.start, window.end,
+                                timeZone: state.settings.displayTimeZone,
+                                format: state.settings.clockFormat
+                            ))
+                            .font(.system(size: 12, design: .rounded))
+                            .monospacedDigit()
+                            Text(TimeFormatting.duration(window.duration))
+                                .font(.system(size: 11, design: .rounded))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 62, alignment: .trailing)
+                            Text("ends at \(window.endLabel)")
+                                .font(.system(size: 11, design: .rounded))
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 130, alignment: .leading)
+                        }
+                    } else {
+                        Text("an instant, not a span")
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+        }
+
         SettingsCard(title: "Fine tuning", symbol: "slider.horizontal.3") {
             CardRow("Minutes added to each calculated time") { EmptyView() }
             ForEach(Prayer.allCases, id: \.self) { prayer in

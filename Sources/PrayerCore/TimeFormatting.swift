@@ -51,6 +51,24 @@ public enum TimeFormatting {
         return formatter.string(from: date)
     }
 
+    /// A start–end pair with the meridiem written once when both ends share it:
+    /// "5:24 – 6:43 AM", "11:30 AM – 1:15 PM", or "05:24 – 06:43".
+    public static func clockRange(
+        _ start: Date,
+        _ end: Date,
+        timeZone: TimeZone,
+        format: ClockFormat
+    ) -> String {
+        let startClock = clock(start, timeZone: timeZone, format: format)
+        let endClock = clock(end, timeZone: timeZone, format: format)
+        guard !format.uses24Hour else { return "\(startClock) – \(endClock)" }
+
+        for period in [" AM", " PM"] where startClock.hasSuffix(period) && endClock.hasSuffix(period) {
+            return startClock.replacingOccurrences(of: period, with: "") + " – " + endClock
+        }
+        return "\(startClock) – \(endClock)"
+    }
+
     /// "Wednesday, 22 January 2025".
     public static func longDate(_ date: Date, timeZone: TimeZone) -> String {
         let formatter = DateFormatter()

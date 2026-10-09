@@ -314,6 +314,23 @@ public enum PrayerCoreSelfTest {
         check("qibla.compassPoint", Qibla.compassPoint(for: 277.57) == "W",
               "got \(Qibla.compassPoint(for: 277.57))")
 
+        // 20. A window's start and end are shown together, with the meridiem
+        //     written once when both ends share it.
+        func at(_ hour: Int, _ minute: Int) -> Date {
+            var c = DateComponents()
+            c.year = 2026; c.month = 1; c.day = 22; c.hour = hour; c.minute = minute
+            return calendar.date(from: c)!
+        }
+        check("clock.range12Morning",
+              TimeFormatting.clockRange(at(5, 24), at(6, 43), timeZone: zone, format: .twelveHour) == "5:24 – 6:43 AM",
+              "got \(TimeFormatting.clockRange(at(5, 24), at(6, 43), timeZone: zone, format: .twelveHour))")
+        check("clock.range12Crossing",
+              TimeFormatting.clockRange(at(11, 30), at(13, 15), timeZone: zone, format: .twelveHour) == "11:30 AM – 1:15 PM",
+              "got \(TimeFormatting.clockRange(at(11, 30), at(13, 15), timeZone: zone, format: .twelveHour))")
+        check("clock.range24",
+              TimeFormatting.clockRange(at(5, 24), at(6, 43), timeZone: zone, format: .twentyFourHour) == "05:24 – 06:43",
+              "got \(TimeFormatting.clockRange(at(5, 24), at(6, 43), timeZone: zone, format: .twentyFourHour))")
+
         return failures
     }
 }

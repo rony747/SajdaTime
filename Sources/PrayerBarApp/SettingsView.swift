@@ -79,7 +79,6 @@ struct SettingsView: View {
             detail
         }
         .frame(width: 880, height: 640)
-        .background(Color(nsColor: .windowBackgroundColor))
         .onChange(of: state.requestedSettingsSection) { _, newValue in
             section = newValue
         }
@@ -106,7 +105,7 @@ struct SettingsView: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 14)
-            .padding(.top, 18)
+            .padding(.top, 34)
             .padding(.bottom, 16)
 
             VStack(spacing: 3) {
@@ -119,7 +118,7 @@ struct SettingsView: View {
             Spacer(minLength: 0)
         }
         .frame(width: 214)
-        .background(Color.primary.opacity(0.025))
+        .background(Color.primary.opacity(0.04))
     }
 
     private func sidebarRow(_ item: SettingsSection) -> some View {
@@ -174,7 +173,8 @@ struct SettingsView: View {
                 }
             }
             .padding(.horizontal, 22)
-            .padding(.vertical, 20)
+            .padding(.top, 30)
+            .padding(.bottom, 22)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }

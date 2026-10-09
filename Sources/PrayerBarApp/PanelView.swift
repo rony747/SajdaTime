@@ -179,6 +179,7 @@ struct PanelView: View {
 
     private func prayerRow(_ prayer: Prayer) -> some View {
         let time = state.today?.times[prayer]
+        let window = state.today?.window(for: prayer, nextDay: state.tomorrow)
         let isActive = prayer == state.activeWindow?.prayer
         let isFocused = prayer == (selection ?? state.activeWindow?.prayer ?? state.countdownSubject?.prayer)
 
@@ -193,18 +194,28 @@ struct PanelView: View {
                 Text(prayer.displayName)
                     .font(.system(size: 14, weight: isActive ? .semibold : .regular, design: .rounded))
                 Spacer(minLength: 8)
-                if isActive, let window = state.today?.window(for: prayer, nextDay: state.tomorrow) {
+                if isActive, let window {
                     Text(TimeFormatting.countdown(window.remaining(at: state.now)))
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .font(.system(size: 10.5, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(Palette.greenDeep)
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 7)
                         .padding(.vertical, 3)
                         .background(Capsule().fill(Palette.green.opacity(0.18)))
                 }
-                Text(time.map { state.settings.clock($0) } ?? "--:--")
-                    .font(.system(size: 14, weight: isActive ? .semibold : .regular, design: .rounded))
-                    .monospacedDigit()
+                // Both ends of the window, so it is clear how long the prayer
+                // remains valid rather than only when it starts.
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(rangeText(time: time, window: window))
+                        .font(.system(size: 13, weight: isActive ? .semibold : .regular, design: .rounded))
+                        .monospacedDigit()
+                    if let window {
+                        Text("ends at \(window.endLabel)")
+                            .font(.system(size: 9, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
@@ -296,6 +307,18 @@ struct PanelView: View {
     }
 
     // MARK: - Helpers
+
+    /// "5:24 – 6:43 AM", or just the start when the prayer has no window
+    /// (sunrise is an instant, not a span).
+    private func rangeText(time: Date?, window: PrayerWindow?) -> String {
+        guard let time else { return "--:--" }
+        guard let window else { return state.settings.clock(time) }
+        return TimeFormatting.clockRange(
+            window.start, window.end,
+            timeZone: zone,
+            format: state.settings.clockFormat
+        )
+    }
 
     private func windowSummary(for prayer: Prayer) -> String {
         guard let window = state.today?.window(for: prayer, nextDay: state.tomorrow) else {
