@@ -72,6 +72,13 @@ for asset in appicon banner logo logo-dark; do
     fi
 done
 
+# Full-screen reminder backdrops, one per prayer.
+for prayer in fajr dhuhr asr maghrib isha; do
+    if [ -f "Resources/Assets/alert-$prayer.jpg" ]; then
+        cp "Resources/Assets/alert-$prayer.jpg" "$APP/Contents/Resources/alert-$prayer.jpg"
+    fi
+done
+
 # The .icns is generated from the 1024px master rather than committed as a
 # binary, so the icon has exactly one source of truth.
 if [ -f Resources/Assets/appicon.png ]; then

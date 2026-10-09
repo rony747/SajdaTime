@@ -357,6 +357,21 @@ public enum SajdaCoreSelfTest {
               "adjustment had no effect: both \(String(describing: unadjusted.hijri))")
         check("hijri.adjustmentRecorded", adjusted.hijri?.adjustment == 1)
 
+        // 22. Reminder quotes: short enough to read at a glance, and referenced.
+        check("quotes.count", ReminderQuotes.all.count >= 8, "got \(ReminderQuotes.all.count)")
+        for quote in ReminderQuotes.all {
+            check("quotes.short.\(quote.id)", quote.text.count <= 160,
+                  "\(quote.text.count) characters: \(quote.text)")
+            check("quotes.reference.\(quote.id)", !quote.reference.isEmpty)
+            check("quotes.unique.\(quote.id)",
+                  ReminderQuotes.all.filter { $0.id == quote.id }.count == 1)
+        }
+        // The same saying must never appear twice in a row.
+        let firstQuote = ReminderQuotes.random(excluding: nil)
+        let secondQuote = ReminderQuotes.random(excluding: firstQuote.id)
+        check("quotes.noImmediateRepeat", secondQuote.id != firstQuote.id,
+              "repeated \(firstQuote.id)")
+
         return failures
     }
 }

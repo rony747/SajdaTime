@@ -179,12 +179,16 @@ struct BrandLogo: View {
 /// a background instead of a picture floating in the middle of the card. Callers
 /// must clip, otherwise it overflows its band and draws over the text above it.
 struct BannerArt: View {
+    /// `.fill` spans the width and crops, for a band behind content. `.fit`
+    /// shows the whole scene, which is what the reminder wants at its foot.
+    var mode: ContentMode = .fill
+
     var body: some View {
         if let image = NSImage(named: "banner") {
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
-                .aspectRatio(contentMode: .fill)
+                .aspectRatio(contentMode: mode)
         } else {
             SkylineSilhouette()
         }

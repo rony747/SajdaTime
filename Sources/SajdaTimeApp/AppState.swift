@@ -31,6 +31,7 @@ final class AppState: ObservableObject {
 
     let notifications = NotificationService()
     let focusMode = FocusModeController()
+    let prayerAlert = PrayerAlertController()
     let location = LocationService()
     let heading = HeadingService()
     private var cancellables: Set<AnyCancellable> = []
@@ -47,6 +48,10 @@ final class AppState: ObservableObject {
     private var refreshTask: Task<Void, Never>?
     private var lastLoadedDay: Date?
     private var playedAdhanKeys: Set<String> = []
+    /// A snoozed reminder, and when it should return.
+    private var snoozedAlert: (prayer: Prayer, due: Date)?
+    /// Day on which the user muted the adhan, so it stays muted until midnight.
+    private var adhanMutedDay: Date?
 
     init(store: PrayerTimesStore = PrayerTimesStore()) {
         self.store = store
@@ -122,8 +127,15 @@ final class AppState: ObservableObject {
         if let lastLoadedDay, lastLoadedDay != currentDay {
             Task { await refresh() }
         }
-        focusMode.evaluate(times: today, settings: settings, now: now)
+        // The reminder takes precedence; the focus overlay would otherwise sit
+        // underneath it for the same prayer.
+        if prayerAlert.isVisible {
+            focusMode.dismissIfSuppressed()
+        } else {
+            focusMode.evaluate(times: today, settings: settings, now: now)
+        }
         evaluateAdhanPlayback()
+        evaluatePrayerAlert()
     }
 
     /// Plays the adhan when a prayer time is reached while the app is running.
@@ -133,6 +145,8 @@ final class AppState: ObservableObject {
     /// adhan recording does not.
     private func evaluateAdhanPlayback() {
         guard settings.notificationsEnabled, let today else { return }
+        // Muted for the rest of the day from the reminder's own button.
+        if let muted = adhanMutedDay, Calendar.current.isDate(muted, inSameDayAs: now) { return }
         for prayer in Prayer.obligatory {
             guard let prayerTime = today.times[prayer] else { continue }
             // Only fire on the minute the prayer starts, so a missed tick does
@@ -155,6 +169,57 @@ final class AppState: ObservableObject {
         // Keep the set from growing without bound across days.
         if playedAdhanKeys.count > 64 {
             playedAdhanKeys.removeAll()
+        }
+    }
+
+    /// Show the full-screen reminder when a prayer begins, or when a snooze
+    /// comes due.
+    private func evaluatePrayerAlert() {
+        guard settings.notificationsEnabled else { return }
+
+        if let snoozed = snoozedAlert, now >= snoozed.due {
+            snoozedAlert = nil
+            presentAlert(for: snoozed.prayer)
+            return
+        }
+
+        guard let today else { return }
+        for prayer in Prayer.obligatory {
+            guard let prayerTime = today.times[prayer] else { continue }
+            // Only on the minute it starts, so a missed tick cannot replay it.
+            guard now >= prayerTime, now.timeIntervalSince(prayerTime) < 60 else { continue }
+
+            let key = "alert-\(prayer.rawValue)-\(Int(prayerTime.timeIntervalSince1970))"
+            guard !playedAdhanKeys.contains(key) else { continue }
+            playedAdhanKeys.insert(key)
+            presentAlert(for: prayer)
+        }
+    }
+
+    private func presentAlert(for prayer: Prayer) {
+        guard settings.fullScreenReminder, let today else { return }
+        prayerAlert.show(
+            prayer: prayer,
+            time: today.times[prayer] ?? now,
+            settings: settings,
+            place: settings.locationName,
+            hijri: today.hijri?.formatted
+        )
+    }
+
+    /// Show the reminder for a prayer straight away. Used by the
+    /// SAJDA_TEST_ALERT development hook.
+    func previewAlert(for prayer: Prayer) {
+        presentAlert(for: prayer)
+    }
+
+    /// Wire the reminder's buttons. Called once at launch.
+    func connectPrayerAlert() {
+        prayerAlert.onSnooze = { [weak self] prayer, interval in
+            self?.snoozedAlert = (prayer, Date().addingTimeInterval(interval))
+        }
+        prayerAlert.onMuteToday = { [weak self] in
+            self?.adhanMutedDay = Calendar.current.startOfDay(for: Date())
         }
     }
 

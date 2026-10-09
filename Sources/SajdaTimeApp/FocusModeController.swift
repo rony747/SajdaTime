@@ -98,6 +98,12 @@ final class FocusModeController: ObservableObject {
         showOverlay(prayer: nil, duration: duration, intensity: .medium, allowsEscape: true)
     }
 
+    /// Called when something else is covering the screen for this prayer.
+    func dismissIfSuppressed() {
+        guard isActive else { return }
+        dismiss()
+    }
+
     func dismiss() {
         dismissTask?.cancel()
         dismissTask = nil

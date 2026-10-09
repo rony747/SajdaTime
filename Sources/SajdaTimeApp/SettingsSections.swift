@@ -276,6 +276,16 @@ struct NotificationsSection: View {
                     width: 140
                 )
             }
+            CardRow("Show a full-screen reminder", subtitle: "Covers the screen when a prayer begins, with a short hadith and a backdrop for that prayer.") {
+                GreenToggle(isOn: state.binding(\.fullScreenReminder))
+            }
+            CardRow("Snooze length") {
+                GreenPicker(
+                    options: [(5, "5 min"), (10, "10 min"), (15, "15 min"), (20, "20 min")],
+                    selection: state.binding(\.snoozeMinutes),
+                    width: 120
+                )
+            }
             CardRow("Default sound", subtitle: "Used for every reminder unless a prayer overrides it.") {
                 HStack(spacing: 8) {
                     GreenPicker(

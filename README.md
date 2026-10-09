@@ -182,6 +182,7 @@ Development hooks, all environment-gated:
 | `SAJDA_CYCLE_APPEARANCE=1` | cycle dark then light after launch |
 | `SAJDA_DEBUG=1` | log popover geometry, appearance and the menu bar label |
 | `SAJDA_FAKE_HEADING=<deg>` | pretend a magnetometer exists at a fixed heading |
+| `SAJDA_TEST_ALERT=<prayer>` | show the full-screen reminder for that prayer |
 
 `sajdactl seed-appearance <system\|light\|dark>` writes the preference directly
 into the app's domain so a specific theme can be exercised.
@@ -253,6 +254,37 @@ consulted, or never shown at all:
 | `showIshraq` | bound, no effect | renders the Ishraq row after sunrise |
 | `hijriDayAdjustment` | bound, no effect — the calculator hardcoded 0 and the API path ignored it | applied on both paths, with a self-test |
 | `language` | bound, no effect; there is no localisation | setting and enum removed rather than left as decoration |
+
+## Full-screen prayer reminder
+
+At each prayer the app covers the screen with a notice rather than only posting a
+banner: the prayer name, its time, the place and Hijri date, a short saying on
+the merit of salah, and Dismiss / Snooze / Mute-Adhan-Today.
+
+- **Backdrop per prayer.** Five images, one per prayer, chosen because the light
+  in each matches the time of day: first light for Fajr, bright midday for Dhuhr,
+  golden hour for Asr, sun on the horizon for Maghrib, and night for Isha.
+- **Quotes are short and referenced.** Ten sayings — seven ahadith and three
+  Qur'anic verses — taken from the QuranExplorer compilation on the merit of
+  salah, quoted rather than paraphrased. A self-test fails if any grows past 160
+  characters or loses its reference, and the same saying never appears twice in a
+  row. Narrators are omitted where the source does not give one, rather than
+  invented.
+- **Text contrast is tuned per backdrop.** Dark text on a light wash; the night
+  image needs a much stronger wash than the daylight ones.
+- Snooze re-shows after the configured interval. "Mute Adhan Today" stops the
+  adhan audio until midnight. Escape always dismisses.
+
+Focus Mode and the reminder do not stack: while the reminder is up, the focus
+overlay is suppressed for that prayer.
+
+### Sourcing note
+
+The ahadith and their references come from
+[QuranExplorer](https://www.quranexplorer.com/blog/merit-of-surah/Importance_of_salah_(prayer)_according_to_the_Quran_and_Hadith),
+one of the two pages suggested. [sunnah.com](https://sunnah.com/bukhari/8) could
+not be used: it answers automated requests with HTTP 403 behind a Cloudflare
+challenge, so nothing here was taken from it or checked against it.
 
 ## Clock format
 

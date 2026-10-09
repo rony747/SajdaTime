@@ -22,6 +22,28 @@ enum PreviewRenderer {
                 to: directory, name: "panel-\(label)"
             )
 
+            // The full-screen reminder for every prayer, since each one uses a
+            // different backdrop and the text has to stay legible on all of them.
+            for (index, prayer) in Prayer.obligatory.enumerated() {
+                write(
+                    PrayerAlertView(
+                        prayer: prayer,
+                        time: state.now,
+                        place: state.settings.locationName,
+                        hijri: state.today?.hijri?.formatted,
+                        settings: state.settings,
+                        quote: ReminderQuotes.all[index % ReminderQuotes.all.count],
+                        snoozeMinutes: state.settings.snoozeMinutes,
+                        onDismiss: {}, onSnooze: {}, onMuteToday: {}
+                    )
+                    // Laid out at a real screen size; without this the renderer
+                    // uses the content's ideal size and the layout overflows.
+                    .frame(width: 1680, height: 1050)
+                    .environment(\.colorScheme, scheme),
+                    to: directory, name: "alert-\(prayer.rawValue)-\(label)"
+                )
+            }
+
             // The compass at known headings, so the bezel rotation and the
             // marker placement can be checked against the expected angles.
             for heading in [0.0, 90.0, 180.0, 270.0] {

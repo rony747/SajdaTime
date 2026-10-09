@@ -43,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         // The appearance preference applies to every window, the popover
         // included, so it is set on the application rather than per view.
+        state.connectPrayerAlert()
         AppearanceController.apply(state.settings.appearance)
         state.$settings
             .map(\.appearance)
@@ -71,6 +72,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 state.settings.appearance = .dark
                 try? await Task.sleep(for: .seconds(3))
                 state.settings.appearance = .light
+            }
+        }
+
+        // Development aid: show the reminder for a named prayer immediately.
+        if let raw = ProcessInfo.processInfo.environment["SAJDA_TEST_ALERT"],
+           let prayer = Prayer(rawValue: raw) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2))
+                self.state.previewAlert(for: prayer)
             }
         }
 

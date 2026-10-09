@@ -281,6 +281,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var defaultIqamahMinutes: Int?
     /// Path to the audio file played for the full adhan, when the user opts in.
     public var adhanAudioPath: String?
+    /// Show a full-screen reminder at prayer time, rather than only a banner.
+    public var fullScreenReminder: Bool
+    /// How long the reminder's snooze defers it, in minutes.
+    public var snoozeMinutes: Int
     public var perPrayer: [String: PrayerReminderSettings]
 
     // Focus mode
@@ -324,6 +328,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         defaultEarlyReminderMinutes: Int? = nil,
         defaultIqamahMinutes: Int? = nil,
         adhanAudioPath: String? = nil,
+        fullScreenReminder: Bool = true,
+        snoozeMinutes: Int = 10,
         perPrayer: [String: PrayerReminderSettings] = [:],
         focusModeEnabled: Bool = false,
         focusDurationMinutes: Int = 15,
@@ -362,6 +368,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.defaultEarlyReminderMinutes = defaultEarlyReminderMinutes
         self.defaultIqamahMinutes = defaultIqamahMinutes
         self.adhanAudioPath = adhanAudioPath
+        self.fullScreenReminder = fullScreenReminder
+        self.snoozeMinutes = snoozeMinutes
         self.perPrayer = perPrayer
         self.focusModeEnabled = focusModeEnabled
         self.focusDurationMinutes = focusDurationMinutes
