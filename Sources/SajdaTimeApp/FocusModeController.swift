@@ -221,7 +221,7 @@ private struct FocusOverlayView: View {
                 } else {
                     Image(systemName: "eye")
                         .font(.system(size: 56, weight: .light))
-                        .foregroundStyle(Palette.accent)
+                        .foregroundStyle(Palette.emeraldAction)
                     Text("Focus Mode preview")
                         .font(.system(size: 40, weight: .semibold, design: .rounded))
                 }

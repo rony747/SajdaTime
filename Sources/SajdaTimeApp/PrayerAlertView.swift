@@ -105,7 +105,8 @@ struct PrayerAlertView: View {
 
     private var card: some View {
         VStack(spacing: 0) {
-            archOrnament
+            // The app's own artwork, in place of the drawn arch.
+            illustration
                 .padding(.top, 18)
 
             Text("It's time for \(prayer.displayName)")
@@ -148,25 +149,39 @@ struct PrayerAlertView: View {
         .shadow(color: .black.opacity(0.55), radius: 46, y: 22)
     }
 
-    /// The mihrab outline with its crescent and domes, at the head of the card.
-    private var archOrnament: some View {
-        ZStack {
-            MihrabArch()
-                .stroke(Palette.gold.opacity(0.65), lineWidth: 1.2)
-            VStack(spacing: 3) {
-                Image(systemName: "moon.fill")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Palette.cream.opacity(0.9))
-                HStack(alignment: .bottom, spacing: 5) {
-                    DomeShape().frame(width: 13, height: 6.5)
-                    DomeShape().frame(width: 22, height: 11)
-                    DomeShape().frame(width: 13, height: 6.5)
-                }
-                .foregroundStyle(Palette.gold.opacity(0.85))
-            }
-            .offset(y: 11)
-        }
-        .frame(width: 128, height: 64)
+    /// The app's artwork at the head of the card, in place of the drawn arch.
+    /// Fitted so the whole scene shows, and faded at the base so it sits on the
+    /// emerald rather than ending on a hard edge.
+    private var illustration: some View {
+        // Filled and anchored low, so the crop lands on the mosque and the hills.
+        // Fitted whole, the artwork's pale sun sat directly above the title as a
+        // bright blob against the emerald.
+        BannerArt(mode: .fill)
+            .frame(width: 330, height: 62, alignment: .bottom)
+            .clipped()
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0.00),
+                        .init(color: .black, location: 0.38),
+                        .init(color: .black, location: 0.78),
+                        .init(color: .clear, location: 1.00),
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+            )
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0.00),
+                        .init(color: .black, location: 0.20),
+                        .init(color: .black, location: 0.80),
+                        .init(color: .clear, location: 1.00),
+                    ],
+                    startPoint: .leading, endPoint: .trailing
+                )
+            )
+            .opacity(0.95)
     }
 
     private var timeChip: some View {
@@ -363,44 +378,6 @@ struct RuleDivider: View {
         Rectangle()
             .fill(Palette.gold.opacity(0.35))
             .frame(width: width, height: 1)
-    }
-}
-
-/// The pointed arch that heads the card.
-struct MihrabArch: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let w = rect.width, h = rect.height
-        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + h * 0.50))
-        path.addCurve(
-            to: CGPoint(x: rect.midX, y: rect.minY),
-            control1: CGPoint(x: rect.minX, y: rect.minY + h * 0.14),
-            control2: CGPoint(x: rect.minX + w * 0.30, y: rect.minY + h * 0.05)
-        )
-        path.addCurve(
-            to: CGPoint(x: rect.maxX, y: rect.minY + h * 0.50),
-            control1: CGPoint(x: rect.maxX - w * 0.30, y: rect.minY + h * 0.05),
-            control2: CGPoint(x: rect.maxX, y: rect.minY + h * 0.14)
-        )
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        return path
-    }
-}
-
-/// A half-round dome, for the silhouette inside the arch.
-struct DomeShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.addArc(
-            center: CGPoint(x: rect.midX, y: rect.maxY),
-            radius: rect.width / 2,
-            startAngle: .degrees(180),
-            endAngle: .degrees(0),
-            clockwise: false
-        )
-        path.closeSubpath()
-        return path
     }
 }
 

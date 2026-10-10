@@ -43,11 +43,22 @@ enum Palette {
     /// Warm ivory for every piece of text on the emerald card.
     static let cream = Color(red: 0.957, green: 0.922, blue: 0.839)
 
-    /// The app's interactive accent. Brass rather than green, so selections and
-    /// toggles read as the same material as the reminder's ornament.
-    static let accent = gold
-    /// Fill behind a selected row or pill on a light surface.
-    static let accentSoft = Color(red: 0.976, green: 0.941, blue: 0.859)
+    /// The functional accent on ordinary surfaces: emerald, not brass.
+    ///
+    /// Brass is an ornament, and it belongs on the emerald cards where it reads
+    /// as metal. Used for toggles, segmented controls and icons on the system
+    /// chrome it read as yellow instead. Hence the split: brass decorates, this
+    /// one operates.
+    static func interactive(_ scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 0.369, green: 0.749, blue: 0.573)
+            : emeraldAction
+    }
+
+    /// Fill behind a selected row or pill on an ordinary surface.
+    static func tintFill(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? interactive(scheme).opacity(0.22) : Color(red: 0.882, green: 0.945, blue: 0.910)
+    }
     /// Muted ivory for the secondary lines on an emerald card.
     static let creamMuted = Color(red: 0.957, green: 0.922, blue: 0.839).opacity(0.72)
 
@@ -72,14 +83,14 @@ enum Palette {
     /// `greenDeep` is correct on the pale banner, but on a dark card or a
     /// dark-tinted row it became dark-on-dark and disappeared.
     static func accentText(_ scheme: ColorScheme) -> Color {
-        // Brass is legible on the dark popover but not on a pale card, where the
-        // deep emerald still carries. The emerald card supplies its own colours.
-        scheme == .dark ? gold : greenInk
+        // Only ever used on ordinary surfaces, so it stays emerald; the emerald
+        // cards supply their own brass and ivory.
+        scheme == .dark ? Color(red: 0.369, green: 0.749, blue: 0.573) : greenInk
     }
 
     /// Fill for a selected row or pill.
     static func selectionFill(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? gold.opacity(0.22) : accentSoft
+        tintFill(scheme)
     }
 
     static var markGradient: LinearGradient {
@@ -243,7 +254,7 @@ struct BannerArt: View {
 struct SettingsCard<Content: View>: View {
     var title: String?
     var symbol: String?
-    var tint: Color = Palette.accent
+    var tint: Color = Palette.emeraldAction
     @ViewBuilder var content: Content
 
     @Environment(\.colorScheme) private var scheme
@@ -330,12 +341,13 @@ struct CardRow<Trailing: View>: View {
 /// Green-tinted switch, as used throughout the design.
 struct SettingToggle: View {
     @Binding var isOn: Bool
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         Toggle("", isOn: $isOn)
             .labelsHidden()
             .toggleStyle(.switch)
-            .tint(Palette.accent)
+            .tint(Palette.interactive(scheme))
             .controlSize(.small)
     }
 }
@@ -344,6 +356,7 @@ struct SettingToggle: View {
 struct SettingSegmented<Value: Hashable>: View {
     let options: [(Value, String)]
     @Binding var selection: Value
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         HStack(spacing: 3) {
@@ -359,7 +372,7 @@ struct SettingSegmented<Value: Hashable>: View {
                         .padding(.vertical, 5)
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(selected ? Palette.accent : Color.clear)
+                                .fill(selected ? Palette.interactive(scheme) : Color.clear)
                         )
                         .contentShape(Rectangle())
                 }
@@ -379,6 +392,7 @@ struct SettingPicker<Value: Hashable>: View {
     let options: [(Value, String)]
     @Binding var selection: Value
     var width: CGFloat?
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         Picker("", selection: $selection) {
@@ -389,7 +403,7 @@ struct SettingPicker<Value: Hashable>: View {
         .labelsHidden()
         .pickerStyle(.menu)
         .controlSize(.regular)
-        .tint(Palette.accent)
+        .tint(Palette.interactive(scheme))
         .frame(width: width, alignment: .trailing)
     }
 }
@@ -480,7 +494,7 @@ struct StatusLine: View {
 
     private var colour: Color {
         switch kind {
-        case .info: return Palette.accent
+        case .info: return Palette.emeraldAction
         case .warning: return Palette.amber
         case .error: return .red
         }

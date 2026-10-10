@@ -92,7 +92,7 @@ struct MonthView: View {
         .frame(height: 40)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(isToday ? Palette.accent : Color.primary.opacity(0.04))
+                .fill(isToday ? Palette.emeraldAction : Color.primary.opacity(0.04))
         )
     }
 

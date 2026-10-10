@@ -97,7 +97,7 @@ struct PanelView: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .frame(width: 28)
-        .foregroundStyle(Palette.accentText(scheme))
+        .foregroundStyle(.secondary)
     }
 
     // MARK: - Place and clock
@@ -229,7 +229,7 @@ struct PanelView: View {
         return HStack(spacing: 10) {
                 Image(systemName: prayer.symbolName)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(isActive ? Palette.accent : Palette.tint(for: prayer))
+                    .foregroundStyle(isActive ? Palette.emeraldAction : Palette.tint(for: prayer))
                     .frame(width: 22)
                 Text(prayer.displayName)
                     .font(.system(size: 14, weight: isActive ? .semibold : .regular, design: .rounded))
@@ -241,7 +241,7 @@ struct PanelView: View {
                         .foregroundStyle(Palette.accentText(scheme))
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(Capsule().fill(Palette.accent.opacity(0.18)))
+                        .background(Capsule().fill(Palette.emeraldAction.opacity(0.18)))
                 }
                 // Both ends of the window, so it is clear how long the prayer
                 // remains valid rather than only when it starts.
@@ -261,7 +261,7 @@ struct PanelView: View {
             .padding(.vertical, 9)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isActive ? Palette.accent.opacity(0.16) : Color.primary.opacity(0.05))
+                    .fill(isActive ? Palette.emeraldAction.opacity(0.16) : Color.primary.opacity(0.05))
             )
             .help(windowSummary(for: prayer))
     }

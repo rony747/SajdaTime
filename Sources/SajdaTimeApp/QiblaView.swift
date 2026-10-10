@@ -61,7 +61,7 @@ struct QiblaView: View {
                         let cardinal = cardinals[index]
                         Text(cardinal.label)
                             .font(.system(size: 10, weight: .semibold, design: .rounded))
-                            .foregroundStyle(cardinal.label == "N" ? Palette.accent : Color.secondary)
+                            .foregroundStyle(cardinal.label == "N" ? Palette.emeraldAction : Color.secondary)
                             .offset(x: cardinal.x, y: cardinal.y)
                     }
 
@@ -72,7 +72,7 @@ struct QiblaView: View {
                         Text("Qibla")
                             .font(.system(size: 8, weight: .semibold, design: .rounded))
                     }
-                    .foregroundStyle(Palette.accent)
+                    .foregroundStyle(Palette.emeraldAction)
                     .offset(y: -46)
                     .rotationEffect(.degrees(bearing))
                 }
@@ -91,7 +91,7 @@ struct QiblaView: View {
                     .monospacedDigit()
                 Text(turnInstruction)
                     .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(Palette.accent)
+                    .foregroundStyle(Palette.emeraldAction)
                 Text(String(format: "%.0f km to the Kaaba · facing %.0f°", distance, heading))
                     .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.secondary)
