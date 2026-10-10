@@ -141,7 +141,6 @@ struct PrayerAlertView: View {
             RoundedRectangle(cornerRadius: 36, style: .continuous)
                 .strokeBorder(Palette.gold.opacity(0.55), lineWidth: 1.4)
         )
-        .overlay { filigree }
         .shadow(color: .black.opacity(0.55), radius: 46, y: 22)
     }
 
@@ -275,32 +274,6 @@ struct PrayerAlertView: View {
         .buttonStyle(.plain)
     }
 
-    private var filigree: some View {
-        let stroke = Palette.gold.opacity(0.28)
-        return ZStack {
-            CornerFiligree().stroke(stroke, lineWidth: 1)
-                .frame(width: 44, height: 44)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .rotationEffect(.degrees(0))
-                .padding(12)
-            CornerFiligree().stroke(stroke, lineWidth: 1)
-                .frame(width: 44, height: 44)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .rotationEffect(.degrees(90))
-                .padding(12)
-            CornerFiligree().stroke(stroke, lineWidth: 1)
-                .frame(width: 44, height: 44)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .rotationEffect(.degrees(180))
-                .padding(12)
-            CornerFiligree().stroke(stroke, lineWidth: 1)
-                .frame(width: 44, height: 44)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                .rotationEffect(.degrees(270))
-                .padding(12)
-        }
-    }
-
     private var countdownText: String {
         let total = Int(remaining.rounded())
         return String(format: "%d:%02d", total / 60, total % 60)
@@ -339,24 +312,5 @@ struct RuleDivider: View {
         Rectangle()
             .fill(Palette.gold.opacity(0.35))
             .frame(width: width, height: 1)
-    }
-}
-
-/// Nested curves in one corner, standing in for the design's filigree.
-struct CornerFiligree: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let w = rect.width, h = rect.height
-        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.maxX, y: rect.minY),
-            control: CGPoint(x: rect.minX + w * 0.08, y: rect.minY + h * 0.08)
-        )
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY + h * 0.55))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX + w * 0.55, y: rect.minY),
-            control: CGPoint(x: rect.minX + w * 0.10, y: rect.minY + h * 0.10)
-        )
-        return path
     }
 }
