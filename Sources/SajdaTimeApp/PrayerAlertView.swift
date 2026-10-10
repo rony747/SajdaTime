@@ -105,17 +105,13 @@ struct PrayerAlertView: View {
 
     private var card: some View {
         VStack(spacing: 0) {
-            // The app's own artwork, in place of the drawn arch.
-            illustration
-                .padding(.top, 18)
-
             Text("It's time for \(prayer.displayName)")
                 .font(.system(size: 52, weight: .bold, design: .serif))
                 .tracking(-1.0)
                 .foregroundStyle(Palette.cream)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-                .padding(.top, 2)
+                .padding(.top, 30)
 
             Text("Pause for prayer and reconnect.")
                 .font(.system(size: 21, design: .serif))
@@ -147,41 +143,6 @@ struct PrayerAlertView: View {
         )
         .overlay { filigree }
         .shadow(color: .black.opacity(0.55), radius: 46, y: 22)
-    }
-
-    /// The app's artwork at the head of the card, in place of the drawn arch.
-    /// Fitted so the whole scene shows, and faded at the base so it sits on the
-    /// emerald rather than ending on a hard edge.
-    private var illustration: some View {
-        // Filled and anchored low, so the crop lands on the mosque and the hills.
-        // Fitted whole, the artwork's pale sun sat directly above the title as a
-        // bright blob against the emerald.
-        BannerArt(mode: .fill)
-            .frame(width: 330, height: 62, alignment: .bottom)
-            .clipped()
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0.00),
-                        .init(color: .black, location: 0.38),
-                        .init(color: .black, location: 0.78),
-                        .init(color: .clear, location: 1.00),
-                    ],
-                    startPoint: .top, endPoint: .bottom
-                )
-            )
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0.00),
-                        .init(color: .black, location: 0.20),
-                        .init(color: .black, location: 0.80),
-                        .init(color: .clear, location: 1.00),
-                    ],
-                    startPoint: .leading, endPoint: .trailing
-                )
-            )
-            .opacity(0.95)
     }
 
     private var timeChip: some View {
