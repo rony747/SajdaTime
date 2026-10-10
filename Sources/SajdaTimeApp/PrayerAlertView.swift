@@ -55,8 +55,9 @@ struct PrayerAlertView: View {
 
     private var content: some View {
         VStack(spacing: 0) {
-            header
             Spacer(minLength: 14)
+            header
+                .padding(.bottom, 18)
             card
                 .frame(maxWidth: 760)
             Spacer(minLength: 14)
@@ -87,18 +88,17 @@ struct PrayerAlertView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            AppMark(size: 46)
+            AppMark(size: 48)
             VStack(alignment: .leading, spacing: 0) {
                 Text("Sajda Time")
-                    .font(.system(size: 21, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                 Text("Your Daily Connection")
-                    .font(.system(size: 12.5, design: .rounded))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundStyle(Palette.cream.opacity(0.72))
             }
-            Spacer(minLength: 0)
         }
         .foregroundStyle(Palette.cream)
-        .shadow(color: .black.opacity(0.55), radius: 10, y: 1)
+        .shadow(color: .black.opacity(0.6), radius: 10, y: 1)
     }
 
     // MARK: - The card
