@@ -94,17 +94,21 @@ struct SummaryCard: View {
 
                 if let subject = state.countdownSubject {
                     VStack(alignment: .trailing, spacing: 1) {
-                        Text("Next Prayer")
+                        Text(subject.isWindowEnd ? "Current Prayer" : "Next Prayer")
                             .font(.system(size: 10, weight: .semibold, design: .rounded))
                             .tracking(0.5)
                             .foregroundStyle(Palette.gold.opacity(0.9))
                         Text(subject.prayer.displayName)
                             .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundStyle(Palette.cream)
-                        Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Palette.gold)
-                            .monospacedDigit()
+                        HStack(spacing: 4) {
+                            Image(systemName: subject.isWindowEnd ? "hourglass" : "arrow.forward")
+                                .font(.system(size: 9, weight: .bold))
+                            Text(state.countdownText(for: subject))
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                        }
+                        .foregroundStyle(Palette.gold)
                     }
                 }
             }

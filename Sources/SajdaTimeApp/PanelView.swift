@@ -143,7 +143,11 @@ struct PanelView: View {
         return VStack(spacing: 0) {
                 HStack(alignment: .center, spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(state.activeWindow == nil ? "Next Prayer" : "Current Prayer")
+                        // Taken from the subject, not from `activeWindow`: the
+                        // two can disagree, because which countdown is shown is
+                        // a setting. That mismatch is what made the number
+                        // impossible to read.
+                        Text(subject?.isWindowEnd == true ? "Current Prayer" : "Next Prayer")
                             .font(.system(size: 9.5, weight: .semibold, design: .rounded))
                             .tracking(0.5)
                             .foregroundStyle(Palette.gold.opacity(0.9))
@@ -151,10 +155,17 @@ struct PanelView: View {
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(Palette.cream)
                         if let subject {
-                            Text("in " + TimeFormatting.countdown(subject.date.timeIntervalSince(state.now)))
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Palette.gold)
-                                .monospacedDigit()
+                            // An hourglass reads "how long is left"; an arrow
+                            // reads "how long until". Nine points, so it costs
+                            // almost no space.
+                            HStack(spacing: 4) {
+                                Image(systemName: subject.isWindowEnd ? "hourglass" : "arrow.forward")
+                                    .font(.system(size: 9, weight: .bold))
+                                Text(state.countdownText(for: subject))
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                            }
+                            .foregroundStyle(Palette.gold)
                         }
                     }
                     Spacer(minLength: 0)
