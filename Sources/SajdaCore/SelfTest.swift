@@ -255,7 +255,9 @@ public enum SajdaCoreSelfTest {
         check("menubar.showsIcon", full.symbolName == "sunrise.fill")
         check("menubar.showsName", full.text.contains("Fajr"), "got \(full.text)")
         check("menubar.showsCountdown", full.text.contains("53m"), "got \(full.text)")
-        check("menubar.fullText", full.text == "Fajr 53m", "got \(full.text)")
+        // The countdown now carries its direction, so the whole label reads as a
+        // sentence: "Fajr in 53m" when the time is yet to come.
+        check("menubar.fullText", full.text == "Fajr in 53m", "got \(full.text)")
 
         let iconOnly = MenuBarComposer.content(
             style: .iconOnly, prayerName: "Fajr",
@@ -270,6 +272,23 @@ public enum SajdaCoreSelfTest {
             prayerName: "Isha", prayerSymbol: "moon.stars.fill", countdown: "2h 10m"
         )
         check("menubar.defaultIncludesCountdown", defaulted.text.contains("2h 10m"), "got \(defaulted.text)")
+
+        // 16b. The label has to say which way the countdown runs, or "Fajr 4h 11m"
+        //      reads the same whether the time is left or still to come.
+        let remaining = MenuBarComposer.content(
+            style: MenuBarLabelStyle(rawValue: "iconNameCountdown") ?? .iconNameCountdown,
+            prayerName: "Isha", prayerSymbol: "moon.stars.fill", countdown: "4h 11m",
+            countdownIsRemaining: true
+        )
+        let until = MenuBarComposer.content(
+            style: MenuBarLabelStyle(rawValue: "iconNameCountdown") ?? .iconNameCountdown,
+            prayerName: "Isha", prayerSymbol: "moon.stars.fill", countdown: "4h 11m",
+            countdownIsRemaining: false
+        )
+        check("menubar.remainingIsMarked", remaining.text.contains("left"), "got \(remaining.text)")
+        check("menubar.untilIsMarked", until.text.hasPrefix("Isha in"), "got \(until.text)")
+        check("menubar.theTwoFormsDiffer", remaining.text != until.text,
+              "both rendered as \(remaining.text)")
 
         // 17. First-launch location must come from the system timezone, never a
         //     hard-coded foreign city.

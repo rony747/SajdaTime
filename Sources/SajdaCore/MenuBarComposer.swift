@@ -21,15 +21,23 @@ public struct MenuBarContent: Equatable, Sendable {
 /// logged verbatim by the status item.
 public enum MenuBarComposer {
 
+    /// - Parameter countdownIsRemaining: true when the countdown is time left in
+    ///   the current prayer's window, false when it is time until the next prayer
+    ///   starts. Without it the number is ambiguous: "Fajr 4h 11m" reads the same
+    ///   either way. A word rather than a glyph, because the menu bar is only a
+    ///   few characters wide.
     public static func content(
         style: MenuBarLabelStyle,
         prayerName: String,
         prayerSymbol: String,
-        countdown: String
+        countdown: String,
+        countdownIsRemaining: Bool = false
     ) -> MenuBarContent {
         var parts: [String] = []
         if style.showsName { parts.append(prayerName) }
-        if style.showsCountdown { parts.append(countdown) }
+        if style.showsCountdown {
+            parts.append(countdownIsRemaining ? "\(countdown) left" : "in \(countdown)")
+        }
 
         return MenuBarContent(
             symbolName: style.showsIcon ? prayerSymbol : nil,

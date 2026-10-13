@@ -389,7 +389,8 @@ final class AppState: ObservableObject {
             style: settings.menuBarLabelStyle,
             prayerName: subject?.prayer.displayName ?? "—",
             prayerSymbol: subject?.prayer.symbolName ?? "moon.stars",
-            countdown: compactCountdown
+            countdown: compactCountdown,
+            countdownIsRemaining: subject?.isWindowEnd == true
         )
     }
 
